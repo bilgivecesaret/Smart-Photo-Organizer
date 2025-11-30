@@ -2,8 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" >
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- Permissions for Android 13 (API Level 33) and Above -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" android:minSdkVersion="33" />
+
+    <!-- Permissions for Android 12 (API Level 32) and Below -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 
     <application
         android:allowBackup="true"
@@ -15,18 +19,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartPhotoOrganizer"
         tools:targetApi="31">
+
         <activity
-            android:name=".NoImageActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
+            android:name=".activity.FolderListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FullscreenActivity" />
+        <activity android:name=".activity.ImageGridActivity" />
+        <activity android:name=".activity.FullscreenActivity" />
+        <activity android:name=".activity.NoImageActivity" />
+
     </application>
 
 </manifest>
