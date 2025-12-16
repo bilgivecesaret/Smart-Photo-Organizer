@@ -1,8 +1,9 @@
 package com.example.smart_photo_organizer.adapter;
 
 import android.content.Context;
-import android.content.Intent;
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -10,43 +11,53 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.smart_photo_organizer.model.FolderItem;
-import com.example.smart_photo_organizer.activity.ImageGridActivity;
 import com.example.smart_photo_organizer.R;
+import com.example.smart_photo_organizer.model.FolderItem;
 
 import java.util.List;
 
 public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.ViewHolder> {
 
-    Context context;
-    List<FolderItem> folderList;
+    public interface OnFolderClickListener {
+        void onFolderClick(FolderItem item);
+    }
 
-    public FolderItemAdapter(Context context, List<FolderItem> folderList) {
+    private final Context context;
+    private final List<FolderItem> folderList;
+    private final OnFolderClickListener listener;
+
+    public FolderItemAdapter(Context context,
+                             List<FolderItem> folderList,
+                             OnFolderClickListener listener) {
         this.context = context;
         this.folderList = folderList;
+        this.listener = listener;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.folder_item, parent, false);
-        return new ViewHolder(v);
+        View view = LayoutInflater.from(context)
+                .inflate(R.layout.folder_item, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
         FolderItem item = folderList.get(position);
 
-        holder.txtFolderName.setText(item.getFolderName());
+        holder.txtFolderName.setText(item.getDisplayName());
 
         Glide.with(context)
-                .load(item.previewImage)
+                .load(item.getPreviewImage())
+                .centerCrop()
                 .into(holder.imgPreview);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ImageGridActivity.class);
-            intent.putStringArrayListExtra("images", item.imageList);
-            context.startActivity(intent);
+            if (listener != null) {
+                listener.onFolderClick(item);
+            }
         });
     }
 
@@ -55,16 +66,14 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
         return folderList.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
-
+    static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imgPreview;
         TextView txtFolderName;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
             imgPreview = itemView.findViewById(R.id.imgPreview);
             txtFolderName = itemView.findViewById(R.id.txtFolderName);
         }
     }
 }
-

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/activity_folder_list"
+    android:id="@+id/fragment_image_grid"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="6dp">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerFolders"
+        android:id="@+id/recyclerImages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:padding="4dp" />
+        android:padding="4dp"
+        android:clipToPadding="false" />
 
 </LinearLayout>
