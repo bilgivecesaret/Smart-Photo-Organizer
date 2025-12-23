@@ -1,18 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:padding="10dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/folder_item">
 
-    <ImageView
-        android:id="@+id/imgPreview"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:scaleType="centerCrop"
-        android:layout_marginEnd="12dp" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/folderIcon"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/albums_24px"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imgPreview"
+            android:layout_width="45dp"
+            android:layout_height="35dp"
+            android:scaleType="fitXY"
+            android:layout_marginBottom="18dp"
+            app:layout_constraintBottom_toBottomOf="@+id/folderIcon"
+            app:layout_constraintEnd_toEndOf="@+id/folderIcon"
+            app:layout_constraintStart_toStartOf="@+id/folderIcon" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     <TextView
         android:id="@+id/txtFolderName"
