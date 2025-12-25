@@ -1,4 +1,4 @@
-package com.example.smart_photo_organizer.fragments;
+package com.example.smart_photo_organizer.fragment;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

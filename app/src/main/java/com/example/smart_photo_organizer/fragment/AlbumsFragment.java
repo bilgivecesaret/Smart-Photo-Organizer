@@ -1,6 +1,5 @@
-package com.example.smart_photo_organizer.fragments;
+package com.example.smart_photo_organizer.fragment;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,13 +46,23 @@ public class AlbumsFragment extends Fragment {
         loadImageFolders();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadImageFolders();
+    }
+
+
     private void loadImageFolders() {
         folderList.clear();
 
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {MediaStore.Images.Media.DATA};
+        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
 
-        Cursor cursor = getContext().getContentResolver().query(uri, projection, null, null, null);
+        Cursor cursor = getContext()
+                        .getContentResolver()
+                        .query(uri, projection, null,null, sortOrder);
         if (cursor != null) {
             HashMap<String, ArrayList<String>> folderMap = new HashMap<>();
             while (cursor.moveToNext()) {
@@ -87,8 +96,6 @@ public class AlbumsFragment extends Fragment {
                         .commit();
             });
             recyclerView.setAdapter(adapter);
-
-
         }
     }
 }

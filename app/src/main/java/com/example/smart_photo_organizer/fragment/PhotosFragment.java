@@ -1,6 +1,7 @@
-package com.example.smart_photo_organizer.fragments;
+package com.example.smart_photo_organizer.fragment;
 
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -43,11 +44,13 @@ public class PhotosFragment extends Fragment {
     private void loadAllImages() {
         allImages.clear();
 
-        Cursor cursor = requireContext().getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                new String[]{MediaStore.Images.Media.DATA},
-                null, null, null
-        );
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = {MediaStore.Images.Media.DATA};
+        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+
+        Cursor cursor = getContext()
+                .getContentResolver()
+                .query(uri, projection, null,null, sortOrder);
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -64,6 +67,6 @@ public class PhotosFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadAllImages(); // 🔥 Back dönüşünde yeniden yükleme
+        loadAllImages();
     }
 }

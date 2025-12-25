@@ -12,17 +12,24 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.smart_photo_organizer.R;
+import com.example.smart_photo_organizer.model.FolderItem;
 
 import java.util.List;
 
 public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHolder> {
 
+    public interface OnFolderClickListener {
+        void onFolderClick(String item);
+    }
     private final Context context;
     private final List<String> folderList;
+    private final OnFolderClickListener listener;
 
-    public CleanUpAdapter(Context context, List<String> folderList) {
+
+    public CleanUpAdapter(Context context, List<String> folderList, CleanUpAdapter.OnFolderClickListener listener) {
         this.context = context;
         this.folderList = folderList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -39,6 +46,11 @@ public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHold
 
         holder.txtFolderName.setText(item);
 
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onFolderClick(item);
+            }
+        });
     }
 
     @Override

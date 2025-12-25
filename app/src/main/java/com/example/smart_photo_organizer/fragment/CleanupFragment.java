@@ -1,5 +1,6 @@
-package com.example.smart_photo_organizer.fragments;
+package com.example.smart_photo_organizer.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.smart_photo_organizer.R;
+import com.example.smart_photo_organizer.activity.DuplicatePhotoAlbumActivity;
 import com.example.smart_photo_organizer.adapter.CleanUpAdapter;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +39,17 @@ public class CleanupFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewFolders);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        loadImageFolders();
-    }
+        folderList.add("Duplicated Photos");
+        folderList.add("Blurred Photos");
+        folderList.add("Create Auto Albums");
 
-    private void loadImageFolders() {
-       folderList.add("Duplicated Photos");
-       folderList.add("Blurred Photos");
-       folderList.add("Create Auto Albums");
-       adapter = new CleanUpAdapter(getContext(), folderList);
-       recyclerView.setAdapter(adapter);
+        adapter = new CleanUpAdapter(getContext(), folderList, item -> {
+            if (item.equals("Duplicated Photos")) {
+                Intent intent = new Intent(requireContext(), DuplicatePhotoAlbumActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        recyclerView.setAdapter(adapter);
     }
 }

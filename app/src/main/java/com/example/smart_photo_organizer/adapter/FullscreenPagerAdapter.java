@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.example.smart_photo_organizer.fragments.FullscreenImageFragment;
+import com.example.smart_photo_organizer.fragment.FullscreenImageFragment;
 
 import java.util.List;
 

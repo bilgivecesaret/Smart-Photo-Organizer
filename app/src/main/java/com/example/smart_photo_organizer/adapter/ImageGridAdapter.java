@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.fragments.FullscreenFragment;
+import com.example.smart_photo_organizer.fragment.FullscreenFragment;
 
 import java.util.ArrayList;
 import java.util.List;

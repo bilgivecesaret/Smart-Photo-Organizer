@@ -1,4 +1,4 @@
-package com.example.smart_photo_organizer;
+package com.example.smart_photo_organizer.activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -13,10 +13,10 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.fragments.AlbumsFragment;
-import com.example.smart_photo_organizer.fragments.CleanupFragment;
-import com.example.smart_photo_organizer.fragments.PhotosFragment;
-import com.example.smart_photo_organizer.fragments.SettingsFragment;
+import com.example.smart_photo_organizer.fragment.AlbumsFragment;
+import com.example.smart_photo_organizer.fragment.CleanupFragment;
+import com.example.smart_photo_organizer.fragment.PhotosFragment;
+import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Uygulama açıldığında default olarak Albums fragment açılır
-        bottomNavigationView.setSelectedItemId(R.id.albums);
+        bottomNavigationView.setSelectedItemId(R.id.photos);
     }
 
     private void checkPermissions() {
