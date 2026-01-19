@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Smart-Photo-Organizer"
 include(":app")
+include(":openCV")

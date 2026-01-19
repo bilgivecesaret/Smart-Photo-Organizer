@@ -2,12 +2,12 @@ package com.example.smart_photo_organizer.activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,15 +19,23 @@ import com.example.smart_photo_organizer.model.DuplicateGroup;
 import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
 
 public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
-    RecyclerView recyclerView;
-    List<DuplicateGroup> duplicateGroups = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private final List<DuplicateGroup> duplicateGroups = new ArrayList<>();
+    private static final int HAMMING_THRESHOLD = 10;
+
+    private static class HashItem {
+        String hash;
+        Uri uri;
+
+        HashItem(String hash, Uri uri) {
+            this.hash = hash;
+            this.uri = uri;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +52,9 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
             return;
         }
 
-
         recyclerView = findViewById(R.id.recyclerDuplicateAlbums);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        Executors.newSingleThreadExecutor().execute(this::findDuplicatePhotos);
+        findSimilarPhotos();
     }
 
     private boolean hasImagePermission() {
@@ -61,40 +67,100 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
         }
     }
 
+    private void findSimilarPhotos() {
 
-    private void findDuplicatePhotos() {
-        Map<String, List<Uri>> hashMap = new HashMap<>();
+        duplicateGroups.clear();
+        List<HashItem> allImages = new ArrayList<>();
 
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri baseUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         Cursor cursor = getContentResolver().query(
-                uri,
+                baseUri,
                 new String[]{MediaStore.Images.Media._ID},
-                null, null, null
+                null,
+                null,
+                null
         );
 
         if (cursor == null) return;
 
         while (cursor.moveToNext()) {
             long id = cursor.getLong(0);
-            Uri imageUri = Uri.withAppendedPath(uri, String.valueOf(id));
+            Uri imageUri = Uri.withAppendedPath(baseUri, String.valueOf(id));
 
             String hash = ImagePHash.calculateHash(this, imageUri);
-            if (hash.isEmpty()) continue;
-
-            hashMap.computeIfAbsent(hash, k -> new ArrayList<>()).add(imageUri);
+            if (!hash.isEmpty()) {
+                allImages.add(new HashItem(hash, imageUri));
+            }
         }
         cursor.close();
 
-        for (String hash : hashMap.keySet()) {
-            if (hashMap.get(hash).size() > 1) {
-                duplicateGroups.add(new DuplicateGroup(hash, hashMap.get(hash)));
+        // --- BENZER FOTOĞRAFLARI GRUPLA ---
+        List<List<HashItem>> groups = new ArrayList<>();
+
+        for (HashItem item : allImages) {
+            boolean added = false;
+
+            for (List<HashItem> group : groups) {
+                String representativeHash = group.get(0).hash;
+                int distance = ImagePHash.hammingDistance(
+                        item.hash,
+                        representativeHash
+                );
+
+                if (distance <= HAMMING_THRESHOLD) {
+                    group.add(item);
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added) {
+                List<HashItem> newGroup = new ArrayList<>();
+                newGroup.add(item);
+                groups.add(newGroup);
             }
         }
 
-        runOnUiThread(() -> {
-            DuplicateAlbumAdapter adapter =
-                    new DuplicateAlbumAdapter(this, duplicateGroups);
-            recyclerView.setAdapter(adapter);
-        });
+        // --- DuplicateGroup MODELİNE DÖNÜŞTÜR ---
+        for (List<HashItem> group : groups) {
+            if (group.size() > 1) {
+                List<Uri> uris = new ArrayList<>();
+                for (HashItem item : group) {
+                    uris.add(item.uri);
+                }
+                duplicateGroups.add(
+                        new DuplicateGroup(group.get(0).hash, uris)
+                );
+            }
+        }
+
+        DuplicateAlbumAdapter adapter =
+                new DuplicateAlbumAdapter(this, duplicateGroups);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private final ContentObserver duplicateObserver = new ContentObserver(null) {
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            duplicateGroups.clear();
+            findSimilarPhotos();
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getContentResolver().registerContentObserver(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                true,
+                duplicateObserver
+        );
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getContentResolver().unregisterContentObserver(duplicateObserver);
     }
 }

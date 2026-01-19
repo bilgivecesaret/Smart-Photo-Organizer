@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\UgurOzkan\Documents\GitHub\Smart-Photo-Organizer\openCV\.cxx\Debug\516f252b\x86_64'
+ninja: no work to do.

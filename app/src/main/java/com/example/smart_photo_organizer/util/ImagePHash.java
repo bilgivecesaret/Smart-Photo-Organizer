@@ -55,6 +55,16 @@ public class ImagePHash {
         }
     }
 
+    public static int hammingDistance(String h1, String h2) {
+        int dist = 0;
+        for (int i = 0; i < h1.length(); i++) {
+            if (h1.charAt(i) != h2.charAt(i)) {
+                dist++;
+            }
+        }
+        return dist;
+    }
+
     private static double[][] applyDCT(double[][] f) {
         int N = SIZE;
         double[][] F = new double[N][N];

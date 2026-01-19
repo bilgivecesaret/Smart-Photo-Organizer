@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -64,9 +65,31 @@ public class PhotosFragment extends Fragment {
         );
     }
 
+    private final ContentObserver mediaObserver = new ContentObserver(null) {
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            requireActivity().runOnUiThread(() -> loadAllImages());
+        }
+    };
+
     @Override
     public void onResume() {
         super.onResume();
+        // Observer kaydet
+        requireContext().getContentResolver().registerContentObserver(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                true,
+                mediaObserver
+        );
         loadAllImages();
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Observer kaldır
+        requireContext().getContentResolver().unregisterContentObserver(mediaObserver);
+    }
+
 }
