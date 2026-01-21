@@ -1,13 +1,18 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,15 +23,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.ImageGridAdapter;
 
-
+import java.io.File;
 import java.util.ArrayList;
 
 public class PhotosFragment extends Fragment {
 
-    private static final int STORAGE_PERMISSION_CODE = 200;
-
     RecyclerView recyclerView;
     ArrayList<String> allImages = new ArrayList<>();
+    private ContentObserver mediaObserver;
 
     @Nullable
     @Override
@@ -38,58 +42,121 @@ public class PhotosFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerImages);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
 
+        setupContentObserver();
         loadAllImages();
+
         return view;
     }
 
-    private void loadAllImages() {
-        allImages.clear();
-
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {MediaStore.Images.Media.DATA};
-        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
-
-        Cursor cursor = getContext()
-                .getContentResolver()
-                .query(uri, projection, null,null, sortOrder);
-
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                allImages.add(cursor.getString(0));
+    private void setupContentObserver() {
+        mediaObserver = new ContentObserver(null) {
+            @Override
+            public void onChange(boolean selfChange) {
+                requireActivity().runOnUiThread(() -> loadAllImages());
             }
-            cursor.close();
-        }
+        };
 
-        recyclerView.setAdapter(
-                new ImageGridAdapter(requireContext(), allImages, this)
-        );
-    }
-
-    private final ContentObserver mediaObserver = new ContentObserver(null) {
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            requireActivity().runOnUiThread(() -> loadAllImages());
-        }
-    };
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Observer kaydet
+        // Images koleksiyonu
         requireContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 true,
                 mediaObserver
         );
+
+        // Downloads koleksiyonu (Android 10+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            requireContext().getContentResolver().registerContentObserver(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    true,
+                    mediaObserver
+            );
+        }
+    }
+
+    private void loadAllImages() {
+        allImages.clear();
+
+        // MediaStore Images
+        allImages.addAll(queryMediaStore(MediaStore.Images.Media.getContentUri(
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ?
+                        MediaStore.VOLUME_EXTERNAL : MediaStore.VOLUME_EXTERNAL_PRIMARY
+        )));
+
+        // MediaStore Downloads
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            allImages.addAll(queryMediaStore(MediaStore.Downloads.EXTERNAL_CONTENT_URI));
+        }
+
+        // Dosya sisteminden Downloads klasörü (Android 10+ cihazlarda MediaStore bazen gecikebilir)
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if (downloadDir.exists() && downloadDir.isDirectory()) {
+            File[] files = downloadDir.listFiles((dir, name) -> {
+                String lower = name.toLowerCase();
+                return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
+            });
+            if (files != null) {
+                for (File f : files) {
+                    // MediaScanner ile Content URI oluştur
+                    MediaScannerConnection.scanFile(
+                            requireContext(),
+                            new String[]{f.getAbsolutePath()},
+                            null,
+                            (path, uri) -> {
+                                if (uri != null) {
+                                    allImages.add(uri.toString());
+                                    // Adapter güncellemesi
+                                    requireActivity().runOnUiThread(() ->
+                                            recyclerView.setAdapter(new ImageGridAdapter(requireContext(), allImages, this))
+                                    );
+                                }
+                            });
+                }
+            }
+        }
+
+        // Adapter güncelle (MediaStore’dan gelenler için)
+        recyclerView.setAdapter(new ImageGridAdapter(requireContext(), allImages, this));
+    }
+
+    private ArrayList<String> queryMediaStore(Uri collectionUri) {
+        ArrayList<String> imageList = new ArrayList<>();
+        String[] projection = {MediaStore.Images.Media._ID};
+        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+
+        try (Cursor cursor = requireContext().getContentResolver().query(
+                collectionUri,
+                projection,
+                null,
+                null,
+                sortOrder
+        )) {
+            if (cursor != null) {
+                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(idColumn);
+                    Uri contentUri = Uri.withAppendedPath(collectionUri, String.valueOf(id));
+                    imageList.add(contentUri.toString());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(requireContext(), "Failed to load images.", Toast.LENGTH_SHORT).show();
+        }
+
+        return imageList;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         loadAllImages();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        // Observer kaldır
-        requireContext().getContentResolver().unregisterContentObserver(mediaObserver);
+        if (mediaObserver != null) {
+            requireContext().getContentResolver().unregisterContentObserver(mediaObserver);
+        }
     }
-
 }

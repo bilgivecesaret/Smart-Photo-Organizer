@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.fragment.FullscreenFragment;
 
@@ -37,7 +38,11 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Glide.with(context).load(images.get(position)).into(holder.img);
+        Glide.with(context)
+                .load(images.get(position))
+                .diskCacheStrategy(DiskCacheStrategy.NONE) // disk cache’i pasifleştir
+                .skipMemoryCache(true)                     // memory cache’i pasifleştir
+                .into(holder.img);
 
         holder.img.setOnClickListener(v -> {
             FullscreenFragment fullscreenFragment = new FullscreenFragment();

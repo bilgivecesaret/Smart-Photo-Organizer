@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.model.FolderItem;
 
@@ -52,6 +53,8 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
         Glide.with(context)
                 .load(item.getPreviewImage())
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE) // disk cache’i pasifleştir
+                .skipMemoryCache(true)                     // memory cache’i pasifleştir
                 .into(holder.imgPreview);
 
         holder.itemView.setOnClickListener(v -> {

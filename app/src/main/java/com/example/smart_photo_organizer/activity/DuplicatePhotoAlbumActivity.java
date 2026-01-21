@@ -29,7 +29,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private final List<DuplicateGroup> duplicateGroups = new ArrayList<>();
-    private static final int HAMMING_THRESHOLD = 10;
+    private static final int HAMMING_THRESHOLD = 8;
 
     private static class HashItem {
         String hash;
