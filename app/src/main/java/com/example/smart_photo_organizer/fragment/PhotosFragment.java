@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -42,28 +43,29 @@ public class PhotosFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerImages);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
 
-        setupContentObserver();
         loadAllImages();
 
         return view;
     }
 
     private void setupContentObserver() {
+        if (mediaObserver != null) return;
+
         mediaObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
-                requireActivity().runOnUiThread(() -> loadAllImages());
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> loadAllImages());
+                }
             }
         };
 
-        // Images koleksiyonu
         requireContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 true,
                 mediaObserver
         );
 
-        // Downloads koleksiyonu (Android 10+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             requireContext().getContentResolver().registerContentObserver(
                     MediaStore.Downloads.EXTERNAL_CONTENT_URI,
@@ -73,82 +75,135 @@ public class PhotosFragment extends Fragment {
         }
     }
 
+
     private void loadAllImages() {
         allImages.clear();
 
-        // MediaStore Images
-        allImages.addAll(queryMediaStore(MediaStore.Images.Media.getContentUri(
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ?
-                        MediaStore.VOLUME_EXTERNAL : MediaStore.VOLUME_EXTERNAL_PRIMARY
-        )));
+        ArrayList<String> existingPaths = new ArrayList<>(); // dosya yolları kontrol için
 
-        // MediaStore Downloads
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            allImages.addAll(queryMediaStore(MediaStore.Downloads.EXTERNAL_CONTENT_URI));
+        // 1️⃣ MediaStore Images
+        try (Cursor cursor = requireContext().getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA},
+                MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
+                new String[]{"image/%"},
+                MediaStore.MediaColumns.DATE_ADDED + " DESC"
+        )) {
+            if (cursor != null) {
+                int idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID);
+                int dataCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(idCol);
+                    String path = cursor.getString(dataCol);
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+
+                    if (!existingPaths.contains(path)) {
+                        existingPaths.add(path);
+                        allImages.add(uri.toString());
+                    }
+                }
+            }
         }
 
-        // Dosya sisteminden Downloads klasörü (Android 10+ cihazlarda MediaStore bazen gecikebilir)
+        // 2️⃣ MediaStore Downloads
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try (Cursor cursor = requireContext().getContentResolver().query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.MIME_TYPE},
+                    MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
+                    new String[]{"image/%"},
+                    MediaStore.MediaColumns.DATE_ADDED + " DESC"
+            )) {
+                if (cursor != null) {
+                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID);
+                    int dataCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+
+                    while (cursor.moveToNext()) {
+                        long id = cursor.getLong(idCol);
+                        String path = cursor.getString(dataCol);
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id);
+
+                        if (!existingPaths.contains(path)) {
+                            existingPaths.add(path);
+                            allImages.add(uri.toString());
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3️⃣ Dosya sistemi Downloads klasörü
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         if (downloadDir.exists() && downloadDir.isDirectory()) {
             File[] files = downloadDir.listFiles((dir, name) -> {
                 String lower = name.toLowerCase();
                 return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
             });
+
             if (files != null) {
                 for (File f : files) {
-                    // MediaScanner ile Content URI oluştur
-                    MediaScannerConnection.scanFile(
-                            requireContext(),
-                            new String[]{f.getAbsolutePath()},
-                            null,
-                            (path, uri) -> {
-                                if (uri != null) {
-                                    allImages.add(uri.toString());
-                                    // Adapter güncellemesi
-                                    requireActivity().runOnUiThread(() ->
-                                            recyclerView.setAdapter(new ImageGridAdapter(requireContext(), allImages, this))
-                                    );
-                                }
-                            });
+                    String path = f.getAbsolutePath();
+                    if (!existingPaths.contains(path)) {
+                        existingPaths.add(path);
+                        Uri uri = Uri.fromFile(f);
+                        allImages.add(uri.toString());
+
+                        // MediaScanner ile indexle
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            MediaScannerConnection.scanFile(
+                                    requireContext(),
+                                    new String[]{path},
+                                    new String[]{"image/*"},
+                                    null
+                            );
+                        }
+                    }
                 }
             }
         }
 
-        // Adapter güncelle (MediaStore’dan gelenler için)
         recyclerView.setAdapter(new ImageGridAdapter(requireContext(), allImages, this));
     }
 
-    private ArrayList<String> queryMediaStore(Uri collectionUri) {
-        ArrayList<String> imageList = new ArrayList<>();
-        String[] projection = {MediaStore.Images.Media._ID};
-        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+
+
+    private void loadFromMediaStore(Uri collectionUri) {
+
+        String[] projection = {
+                MediaStore.MediaColumns._ID,
+                MediaStore.MediaColumns.MIME_TYPE
+        };
 
         try (Cursor cursor = requireContext().getContentResolver().query(
                 collectionUri,
                 projection,
-                null,
-                null,
-                sortOrder
+                MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
+                new String[]{"image/%"},
+                MediaStore.MediaColumns.DATE_ADDED + " DESC"
         )) {
-            if (cursor != null) {
-                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-                while (cursor.moveToNext()) {
-                    long id = cursor.getLong(idColumn);
-                    Uri contentUri = Uri.withAppendedPath(collectionUri, String.valueOf(id));
-                    imageList.add(contentUri.toString());
+
+            if (cursor == null) return;
+
+            int idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID);
+
+            while (cursor.moveToNext()) {
+                long id = cursor.getLong(idCol);
+                Uri uri = ContentUris.withAppendedId(collectionUri, id);
+
+                String uriStr = uri.toString();
+                if (!allImages.contains(uriStr)) {
+                    allImages.add(uriStr);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(requireContext(), "Failed to load images.", Toast.LENGTH_SHORT).show();
         }
-
-        return imageList;
     }
+
 
     @Override
     public void onResume() {
         super.onResume();
+        setupContentObserver();
         loadAllImages();
     }
 
@@ -157,6 +212,7 @@ public class PhotosFragment extends Fragment {
         super.onPause();
         if (mediaObserver != null) {
             requireContext().getContentResolver().unregisterContentObserver(mediaObserver);
+            mediaObserver = null;
         }
     }
 }
