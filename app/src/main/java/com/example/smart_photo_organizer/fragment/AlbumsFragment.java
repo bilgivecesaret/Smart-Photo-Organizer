@@ -16,9 +16,8 @@ import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.FolderItemAdapter;
 import com.example.smart_photo_organizer.model.FolderItem;
 import com.example.smart_photo_organizer.model.HashItem;
-import com.example.smart_photo_organizer.util.LoadingImage;
+import com.example.smart_photo_organizer.util.ImageFetcher;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +62,7 @@ public class AlbumsFragment extends Fragment {
         folderList.clear();
 
         ArrayList<HashItem> allImages =
-                LoadingImage.loadAllImages(requireContext());
+                ImageFetcher.loadAllImages(requireContext());
 
         HashMap<String, FolderItem> folderMap = new HashMap<>();
 

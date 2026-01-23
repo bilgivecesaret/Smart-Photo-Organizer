@@ -51,8 +51,9 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
         holder.txtFolderName.setText(item.getFolderName());
 
         Glide.with(context)
-                .load(item.getImageUris())
+                .load(item.getPreviewUri())
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .into(holder.imgPreview);
 
 

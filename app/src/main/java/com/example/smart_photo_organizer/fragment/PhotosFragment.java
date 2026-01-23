@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.content.Context;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
@@ -22,7 +23,7 @@ import android.content.ContentResolver;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.ImageGridAdapter;
 import com.example.smart_photo_organizer.model.HashItem;
-import com.example.smart_photo_organizer.util.LoadingImage;
+import com.example.smart_photo_organizer.util.ImageFetcher;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -43,8 +44,9 @@ public class PhotosFragment extends Fragment {
 
         Executors.newSingleThreadExecutor().execute(() -> {
 
-            ArrayList<HashItem> allImages =
-                    LoadingImage.loadAllImages(requireContext());
+            Context context = getContext();
+            if (context == null) return;
+            ArrayList<HashItem> allImages = ImageFetcher.loadAllImages(context);
 
             ArrayList<Uri> newUris = new ArrayList<>();
             for (HashItem item : allImages) {
@@ -84,7 +86,7 @@ public class PhotosFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
 
             ArrayList<HashItem> allImages =
-                    LoadingImage.loadAllImages(requireContext());
+                    ImageFetcher.loadAllImages(requireContext());
 
             ArrayList<Uri> uris = new ArrayList<>();
             for (HashItem item : allImages) {

@@ -13,8 +13,7 @@ public class ImagePHash {
     private static final int SMALL_SIZE = 8;
 
     public static String calculateHash(Context context, Uri uri) {
-        try {
-            InputStream is = context.getContentResolver().openInputStream(uri);
+        try (InputStream is = context.getContentResolver().openInputStream(uri)) {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = 8;
             opts.inPreferredConfig = Bitmap.Config.RGB_565;
@@ -55,7 +54,7 @@ public class ImagePHash {
             return hash.toString();
 
         } catch (Exception e) {
-            return "";
+            return "ERROR: " + e.getMessage();
         }
     }
 

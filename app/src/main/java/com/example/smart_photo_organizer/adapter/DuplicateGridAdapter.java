@@ -95,13 +95,16 @@ public class DuplicateGridAdapter extends RecyclerView.Adapter<DuplicateGridAdap
     public int getItemCount() {
         return images.size();
     }
-
     public void selectAll(boolean select) {
         selectedImages.clear();
-        if (select) selectedImages.addAll(images);
+        if (select) {
+            selectedImages.addAll(images);
+        }
         notifyDataSetChanged();
-        if (selectionListener != null)
+
+        if (selectionListener != null) {
             selectionListener.onSelectionChanged(selectedImages.size());
+        }
     }
 
     public void clearSelection() {

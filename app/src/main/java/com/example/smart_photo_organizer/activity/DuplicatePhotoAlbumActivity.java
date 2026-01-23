@@ -1,15 +1,13 @@
 package com.example.smart_photo_organizer.activity;
 
-import static com.example.smart_photo_organizer.util.LoadingImage.loadAllImages;
+import static com.example.smart_photo_organizer.util.ImageFetcher.loadAllImages;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.database.ContentObserver;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,10 +21,12 @@ import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.DuplicateAlbumAdapter;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
 import com.example.smart_photo_organizer.model.HashItem;
+import com.example.smart_photo_organizer.util.ImageFetcher;
 import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
@@ -54,57 +54,79 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     }
 
     private void findSimilarPhotos() {
+        ProgressBar progressBar = findViewById(R.id.progressBar);
 
-        duplicateGroups.clear();
+        // 1. İşlem başlamadan önce UI hazırlığı
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
 
-        allImages =  loadAllImages(this);
+        // 2. Tek bir arka plan thread'i başlatıyoruz
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // Veriyi temizle ve yükle
+                List<HashItem> fetchedImages = ImageFetcher.loadAllImages(this);
+                List<List<HashItem>> localGroups = new ArrayList<>();
 
-        // --- BENZER FOTOĞRAFLARI GRUPLA ---
-        groups = new ArrayList<>();
+                // Benzer fotoğrafları grupla (Ağır İşlem)
+                for (HashItem item : fetchedImages) {
+                    if (item.hash == null || item.hash.isEmpty()) continue;
 
-        for (HashItem item : allImages) {
-            boolean added = false;
+                    boolean added = false;
+                    for (List<HashItem> group : localGroups) {
+                        String representativeHash = group.get(0).hash;
+                        int distance = ImagePHash.hammingDistance(item.hash, representativeHash);
 
-            for (List<HashItem> group : groups) {
-                String representativeHash = group.get(0).hash;
-                int distance = ImagePHash.hammingDistance(
-                        item.hash,
-                        representativeHash
-                );
+                        if (distance <= HAMMING_THRESHOLD) {
+                            group.add(item);
+                            added = true;
+                            break;
+                        }
+                    }
 
-                if (distance <= HAMMING_THRESHOLD) {
-                    group.add(item);
-                    added = true;
-                    break;
+                    if (!added) {
+                        List<HashItem> newGroup = new ArrayList<>();
+                        newGroup.add(item);
+                        localGroups.add(newGroup);
+                    }
                 }
-            }
 
-            if (!added) {
-                List<HashItem> newGroup = new ArrayList<>();
-                newGroup.add(item);
-                groups.add(newGroup);
-            }
-        }
-
-        // --- DuplicateGroup MODELİNE DÖNÜŞTÜR ---
-        for (List<HashItem> group : groups) {
-            if (group.size() > 1) {
-                List<Uri> uris = new ArrayList<>();
-                for (HashItem item : group) {
-                    uris.add(item.uri);
+                // UI için DuplicateGroup listesini hazırla
+                List<DuplicateGroup> resultList = new ArrayList<>();
+                for (List<HashItem> group : localGroups) {
+                    if (group.size() > 1) {
+                        List<Uri> uris = new ArrayList<>();
+                        for (HashItem hi : group) {
+                            uris.add(hi.uri);
+                        }
+                        resultList.add(new DuplicateGroup(group.get(0).hash, uris));
+                    }
                 }
-                duplicateGroups.add(
-                        new DuplicateGroup(group.get(0).hash, uris)
-                );
-            }
-        }
 
-        if (adapter == null) {
-            adapter = new DuplicateAlbumAdapter(this, duplicateGroups);
-            recyclerView.setAdapter(adapter);
-        } else {
-            adapter.notifyDataSetChanged();
-        }
+                // 3. UI GÜNCELLEMESİ (Mutlaka runOnUiThread içinde olmalı)
+                runOnUiThread(() -> {
+                    if (progressBar != null) {
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    duplicateGroups.clear();
+                    duplicateGroups.addAll(resultList);
+
+                    if (adapter == null) {
+                        adapter = new DuplicateAlbumAdapter(this, duplicateGroups);
+                        recyclerView.setAdapter(adapter);
+                    } else {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                });
+            }
+        });
     }
 
     private final ContentObserver duplicateObserver = new ContentObserver(null) {
@@ -119,6 +141,10 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Sayfaya her geri dönüldüğünde (örneğin silme ekranından)
+        // listeyi arka planda tekrar tara.
+        findSimilarPhotos();
+
         getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 true,
