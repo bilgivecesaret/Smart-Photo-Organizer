@@ -10,21 +10,20 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DuplicateGridAdapter
-        extends RecyclerView.Adapter<DuplicateGridAdapter.ViewHolder> {
+public class DuplicateGridAdapter extends RecyclerView.Adapter<DuplicateGridAdapter.ViewHolder> {
 
     private final List<Uri> images;
     private final List<Uri> selectedImages = new ArrayList<>();
     private SelectionListener selectionListener;
 
-    public DuplicateGridAdapter(List<Uri> images) {
-        this.images = images;
+    public DuplicateGridAdapter(List<Uri> images, SelectionListener selectionListener) {
+        this.images = images != null ? images : new ArrayList<>();
+        this.selectionListener = selectionListener;
     }
 
     public interface SelectionListener {
@@ -46,58 +45,53 @@ public class DuplicateGridAdapter
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Uri uri = images.get(position);
+        boolean isSelected = selectedImages.contains(uri);
 
         Glide.with(holder.imageView.getContext())
                 .load(uri)
                 .centerCrop()
-                .diskCacheStrategy(DiskCacheStrategy.NONE) // disk cache’i pasifleştir
-                .skipMemoryCache(true)                     // memory cache’i pasifleştir
                 .into(holder.imageView);
-
-        boolean isSelected = selectedImages.contains(uri);
 
         holder.selectionOverlay.setVisibility(isSelected ? View.VISIBLE : View.GONE);
         holder.imgCheck.setVisibility(isSelected ? View.VISIBLE : View.GONE);
         holder.imageView.setScaleX(isSelected ? 0.95f : 1f);
         holder.imageView.setScaleY(isSelected ? 0.95f : 1f);
 
-        holder.itemView.setOnLongClickListener(v -> {
-            if (!isSelected) {
+        holder.itemView.setOnClickListener(v -> {
+            boolean selected = selectedImages.contains(uri);
+
+            if (selectedImages.isEmpty()) {
                 selectedImages.add(uri);
-                notifyItemChanged(position);
+            } else {
+                if (selected) selectedImages.remove(uri);
+                else selectedImages.add(uri);
             }
-            if (selectionListener != null) selectionListener.onSelectionChanged(selectedImages.size());
+
+            notifyItemChanged(holder.getAdapterPosition());
+
+            if (selectionListener != null)
+                selectionListener.onSelectionChanged(selectedImages.size());
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!selectedImages.contains(uri)) {
+                selectedImages.add(uri);
+                notifyItemChanged(holder.getAdapterPosition());
+            }
+
+            if (selectionListener != null)
+                selectionListener.onSelectionChanged(selectedImages.size());
+
             return true;
         });
-
-        holder.itemView.setOnClickListener(v -> {
-            if (selectedImages.size() > 0) { // seçim modunda tek tık ile ekle/çıkar
-                if (isSelected) selectedImages.remove(uri);
-                else selectedImages.add(uri);
-                notifyItemChanged(position);
-                if (selectionListener != null) selectionListener.onSelectionChanged(selectedImages.size());
-            }
-        });
     }
 
-
-    private void toggleSelection(Uri uri) {
-        if (selectedImages.contains(uri)) {
-            selectedImages.remove(uri);
-        } else {
-            selectedImages.add(uri);
-        }
-        notifyDataSetChanged();
-        if (selectionListener != null)
-            selectionListener.onSelectionChanged(selectedImages.size());
-    }
 
     @Override
     public int getItemCount() {
         return images.size();
     }
 
-    // 🔹 Select All
     public void selectAll(boolean select) {
         selectedImages.clear();
         if (select) selectedImages.addAll(images);
@@ -106,7 +100,6 @@ public class DuplicateGridAdapter
             selectionListener.onSelectionChanged(selectedImages.size());
     }
 
-    // 🔹 Clear selection
     public void clearSelection() {
         selectedImages.clear();
         notifyDataSetChanged();
@@ -114,22 +107,21 @@ public class DuplicateGridAdapter
             selectionListener.onSelectionChanged(0);
     }
 
-    // 🔹 Delete seçilenler
     public void removeSelectedImages() {
-        for (Uri uri : new ArrayList<>(selectedImages)) {
-            images.remove(uri);
-            selectedImages.remove(uri);
-        }
+        if (selectedImages.isEmpty()) return;
+        List<Uri> toRemove = new ArrayList<>(selectedImages);
+        images.removeAll(toRemove);
+        selectedImages.clear();
         notifyDataSetChanged();
         if (selectionListener != null)
-            selectionListener.onSelectionChanged(selectedImages.size());
+            selectionListener.onSelectionChanged(0);
     }
 
     public List<Uri> getSelectedImages() {
-        return selectedImages;
+        return new ArrayList<>(selectedImages);
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView, imgCheck;
         View selectionOverlay;
 

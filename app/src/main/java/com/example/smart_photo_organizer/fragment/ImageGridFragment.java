@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,6 +19,8 @@ import com.example.smart_photo_organizer.adapter.ImageGridAdapter;
 import java.util.ArrayList;
 
 public class ImageGridFragment extends Fragment {
+    ArrayList<Uri> images;
+
 
     @Nullable
     @Override
@@ -30,7 +33,7 @@ public class ImageGridFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.recyclerImages);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
 
-        ArrayList<String> images = getArguments() != null ? getArguments().getStringArrayList("images") : new ArrayList<>();
+        images = getArguments() != null ? getArguments().getParcelableArrayList("images") : new ArrayList<>();
         recyclerView.setAdapter(new ImageGridAdapter(requireContext(), images, this));
 
 

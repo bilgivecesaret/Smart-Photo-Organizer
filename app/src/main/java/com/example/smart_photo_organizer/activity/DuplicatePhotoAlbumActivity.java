@@ -1,5 +1,7 @@
 package com.example.smart_photo_organizer.activity;
 
+import static com.example.smart_photo_organizer.util.LoadingImage.loadAllImages;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.DuplicateAlbumAdapter;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
+import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
@@ -28,18 +31,11 @@ import java.util.List;
 public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
+    DuplicateAlbumAdapter adapter;
+    List<HashItem> allImages;
+    List<List<HashItem>> groups;
     private final List<DuplicateGroup> duplicateGroups = new ArrayList<>();
     private static final int HAMMING_THRESHOLD = 8;
-
-    private static class HashItem {
-        String hash;
-        Uri uri;
-
-        HashItem(String hash, Uri uri) {
-            this.hash = hash;
-            this.uri = uri;
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,60 +48,19 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
             return insets;
         });
 
-        if (!hasImagePermission()) {
-            requestPermissions(
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                            ? new String[]{Manifest.permission.READ_MEDIA_IMAGES}
-                            : new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    100
-            );
-            return;
-        }
-
         recyclerView = findViewById(R.id.recyclerDuplicateAlbums);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         findSimilarPhotos();
     }
 
-    private boolean hasImagePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES)
-                    == PackageManager.PERMISSION_GRANTED;
-        } else {
-            return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED;
-        }
-    }
-
     private void findSimilarPhotos() {
 
         duplicateGroups.clear();
-        List<HashItem> allImages = new ArrayList<>();
 
-        Uri baseUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        Cursor cursor = getContentResolver().query(
-                baseUri,
-                new String[]{MediaStore.Images.Media._ID},
-                null,
-                null,
-                null
-        );
-
-        if (cursor == null) return;
-
-        while (cursor.moveToNext()) {
-            long id = cursor.getLong(0);
-            Uri imageUri = Uri.withAppendedPath(baseUri, String.valueOf(id));
-
-            String hash = ImagePHash.calculateHash(this, imageUri);
-            if (!hash.isEmpty()) {
-                allImages.add(new HashItem(hash, imageUri));
-            }
-        }
-        cursor.close();
+        allImages =  loadAllImages(this);
 
         // --- BENZER FOTOĞRAFLARI GRUPLA ---
-        List<List<HashItem>> groups = new ArrayList<>();
+        groups = new ArrayList<>();
 
         for (HashItem item : allImages) {
             boolean added = false;
@@ -144,18 +99,21 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
             }
         }
 
-        DuplicateAlbumAdapter adapter =
-                new DuplicateAlbumAdapter(this, duplicateGroups);
-        recyclerView.setAdapter(adapter);
+        if (adapter == null) {
+            adapter = new DuplicateAlbumAdapter(this, duplicateGroups);
+            recyclerView.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private final ContentObserver duplicateObserver = new ContentObserver(null) {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-            duplicateGroups.clear();
             findSimilarPhotos();
         }
+
     };
 
     @Override

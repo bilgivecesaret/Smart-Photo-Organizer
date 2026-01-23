@@ -1,6 +1,7 @@
 package com.example.smart_photo_organizer.adapter;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,10 +21,10 @@ import java.util.List;
 public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.ViewHolder> {
 
     private final Context context;
-    private final List<String> images;
+    private final List<Uri> images;
     private final Fragment fragment;
 
-    public ImageGridAdapter(Context context, List<String> images, Fragment fragment) {
+    public ImageGridAdapter(Context context, List<Uri> images, Fragment fragment) {
         this.context = context;
         this.images = images;
         this.fragment = fragment;
@@ -40,19 +41,18 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Glide.with(context)
                 .load(images.get(position))
-                .diskCacheStrategy(DiskCacheStrategy.NONE) // disk cache’i pasifleştir
-                .skipMemoryCache(true)                     // memory cache’i pasifleştir
                 .into(holder.img);
+
 
         holder.img.setOnClickListener(v -> {
             FullscreenFragment fullscreenFragment = new FullscreenFragment();
+
             Bundle b = new Bundle();
-            b.putStringArrayList("images", new ArrayList<>(images));
+            b.putParcelableArrayList("images", new ArrayList<>(images));
             b.putInt("position", position);
             fullscreenFragment.setArguments(b);
 
-            fragment.requireActivity()
-                    .getSupportFragmentManager()
+            fragment.getParentFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, fullscreenFragment)
                     .addToBackStack(null)
@@ -64,7 +64,7 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
         ImageView img;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            img = itemView.findViewById(R.id.grid_image_item); // grid_image_item.xml id
+            img = itemView.findViewById(R.id.grid_image_item);
         }
     }
 

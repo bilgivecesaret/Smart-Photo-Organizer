@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 
 public class FullscreenFragment extends Fragment {
 
-    private ArrayList<String> images;
+    private ArrayList<Uri> images;
     private int startPosition;
 
     @Override
@@ -30,7 +31,7 @@ public class FullscreenFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_fullscreen, container, false);
         ViewPager2 viewPager = view.findViewById(R.id.viewPager);
 
-        images = getArguments() != null ? getArguments().getStringArrayList("images") : null;
+        images = getArguments() != null ? getArguments().getParcelableArrayList("images") : null;
         startPosition = getArguments() != null ? getArguments().getInt("position", 0) : 0;
 
         if (images == null || images.isEmpty()) return view;

@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,10 +30,10 @@ public class FullscreenImageFragment extends Fragment {
                 )
         );
 
-        String imagePath = getArguments().getString("imagePath");
+        Uri imageUri = getArguments().getParcelable("imageUri");
 
         Glide.with(this)
-                .load(imagePath)
+                .load(imageUri)
                 .into(photoView);
 
         return photoView;

@@ -48,14 +48,13 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
 
         FolderItem item = folderList.get(position);
 
-        holder.txtFolderName.setText(item.getDisplayName());
+        holder.txtFolderName.setText(item.getFolderName());
 
         Glide.with(context)
-                .load(item.getPreviewImage())
+                .load(item.getImageUris())
                 .centerCrop()
-                .diskCacheStrategy(DiskCacheStrategy.NONE) // disk cache’i pasifleştir
-                .skipMemoryCache(true)                     // memory cache’i pasifleştir
                 .into(holder.imgPreview);
+
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {

@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.adapter;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,11 +13,11 @@ import java.util.List;
 
 public class FullscreenPagerAdapter extends FragmentStateAdapter {
 
-    private final List<String> images;
+    private final List<Uri> images;
 
     public FullscreenPagerAdapter(
             @NonNull Fragment fragment,
-            List<String> images) {
+            List<Uri> images) {
         super(fragment);
         this.images = images;
     }
@@ -28,7 +29,7 @@ public class FullscreenPagerAdapter extends FragmentStateAdapter {
                 new FullscreenImageFragment();
 
         Bundle b = new Bundle();
-        b.putString("imagePath", images.get(position));
+        b.putParcelable("imageUri", images.get(position));
         fragment.setArguments(b);
 
         return fragment;

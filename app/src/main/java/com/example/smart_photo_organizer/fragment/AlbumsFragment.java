@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.FolderItemAdapter;
 import com.example.smart_photo_organizer.model.FolderItem;
+import com.example.smart_photo_organizer.model.HashItem;
+import com.example.smart_photo_organizer.util.LoadingImage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,50 +54,63 @@ public class AlbumsFragment extends Fragment {
         loadImageFolders();
     }
 
-
     private void loadImageFolders() {
         folderList.clear();
 
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {MediaStore.Images.Media.DATA};
-        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+        ArrayList<HashItem> allImages =
+                LoadingImage.loadAllImages(requireContext());
 
-        Cursor cursor = getContext()
-                        .getContentResolver()
-                        .query(uri, projection, null,null, sortOrder);
-        if (cursor != null) {
-            HashMap<String, ArrayList<String>> folderMap = new HashMap<>();
-            while (cursor.moveToNext()) {
-                String imagePath = cursor.getString(0);
-                File file = new File(imagePath);
-                String folderPath = file.getParent();
+        HashMap<String, FolderItem> folderMap = new HashMap<>();
 
-                if (!folderMap.containsKey(folderPath)) {
-                    folderMap.put(folderPath, new ArrayList<>());
-                }
-                folderMap.get(folderPath).add(imagePath);
+        for (HashItem item : allImages) {
+
+            String folderName = item.bucketName;
+            if (folderName == null) folderName = "Unknown";
+
+            FolderItem folderItem = folderMap.get(folderName);
+
+            if (folderItem == null) {
+                ArrayList<Uri> uris = new ArrayList<>();
+                uris.add(item.uri);
+
+                folderItem = new FolderItem(
+                        folderName,
+                        item.uri,   // preview
+                        uris
+                );
+
+                folderMap.put(folderName, folderItem);
+            } else {
+                folderItem.getImageUris().add(item.uri);
             }
-            cursor.close();
-
-            for (String folderPath : folderMap.keySet()) {
-                ArrayList<String> images = folderMap.get(folderPath);
-                folderList.add(new FolderItem(folderPath, images.get(0), images));
-            }
-
-            adapter = new FolderItemAdapter(getContext(), folderList, folderItem -> {
-                ImageGridFragment imageGridFragment = new ImageGridFragment();
-                Bundle args = new Bundle();
-                args.putStringArrayList("images", folderItem.getImageList());
-                imageGridFragment.setArguments(args);
-
-                requireActivity()
-                        .getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, imageGridFragment)
-                        .addToBackStack(null)
-                        .commit();
-            });
-            recyclerView.setAdapter(adapter);
         }
+
+        folderList.addAll(folderMap.values());
+
+        adapter = new FolderItemAdapter(
+                requireContext(),
+                folderList,
+                folderItem -> {
+
+                    ImageGridFragment fragment = new ImageGridFragment();
+                    Bundle args = new Bundle();
+                    args.putParcelableArrayList(
+                            "images",
+                            folderItem.getImageUris()
+                    );
+                    fragment.setArguments(args);
+
+                    requireActivity()
+                            .getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, fragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
+        );
+
+        recyclerView.setAdapter(adapter);
     }
+
+
 }
