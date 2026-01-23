@@ -15,7 +15,11 @@ public class ImagePHash {
     public static String calculateHash(Context context, Uri uri) {
         try {
             InputStream is = context.getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 8;
+            opts.inPreferredConfig = Bitmap.Config.RGB_565;
+
+            Bitmap bitmap = BitmapFactory.decodeStream(is, null, opts);
             bitmap = Bitmap.createScaledBitmap(bitmap, SIZE, SIZE, false);
 
             double[][] gray = new double[SIZE][SIZE];

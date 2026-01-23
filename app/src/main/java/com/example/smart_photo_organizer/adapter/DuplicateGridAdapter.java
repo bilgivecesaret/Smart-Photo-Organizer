@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 
 import java.util.ArrayList;
@@ -47,9 +48,12 @@ public class DuplicateGridAdapter extends RecyclerView.Adapter<DuplicateGridAdap
         Uri uri = images.get(position);
         boolean isSelected = selectedImages.contains(uri);
 
-        Glide.with(holder.imageView.getContext())
-                .load(uri)
+        Glide.with(holder.imageView)
+                .load(images.get(position))
+                .override(300, 300)
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .dontAnimate()
                 .into(holder.imageView);
 
         holder.selectionOverlay.setVisibility(isSelected ? View.VISIBLE : View.GONE);

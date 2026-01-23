@@ -39,9 +39,14 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Glide.with(context)
+        Glide.with(holder.img)
                 .load(images.get(position))
+                .override(300, 300)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .dontAnimate()
                 .into(holder.img);
+
 
 
         holder.img.setOnClickListener(v -> {

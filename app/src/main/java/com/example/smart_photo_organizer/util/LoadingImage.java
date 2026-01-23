@@ -2,7 +2,6 @@ package com.example.smart_photo_organizer.util;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -12,98 +11,76 @@ import com.example.smart_photo_organizer.model.HashItem;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LoadingImage {
-    static ArrayList<HashItem> allImages = new ArrayList<>();
-    static ArrayList<String> existingPaths = new ArrayList<>();
-    public static ArrayList<HashItem> loadAllImages(Context context) {
-        allImages.clear();
-        existingPaths.clear();
 
-        // 1️⃣ MediaStore Images
+    public static ArrayList<HashItem> loadAllImages(Context context) {
+
+        ArrayList<HashItem> allImages = new ArrayList<>();
+        Set<String> addedUris = new HashSet<>();
+
         Uri baseUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
+        String[] projection = {
+                MediaStore.MediaColumns._ID,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                MediaStore.MediaColumns.DATA
+        };
+
+        String selection = MediaStore.MediaColumns.MIME_TYPE + " LIKE ?";
+        String[] selectionArgs = new String[]{"image/%"};
+
         try (Cursor cursor = context.getContentResolver().query(
                 baseUri,
-                new String[]{
-                        MediaStore.MediaColumns._ID,
-                        MediaStore.Images.Media.BUCKET_DISPLAY_NAME
-                },
-                MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
-                new String[]{"image/%"},
+                projection,
+                selection,
+                selectionArgs,
                 MediaStore.MediaColumns.DATE_ADDED + " DESC"
         )) {
-            if (cursor == null) return allImages;
 
-            while (cursor.moveToNext()) {
-                long id = cursor.getLong(0);
-                Uri imageUri = Uri.withAppendedPath(baseUri, String.valueOf(id));
-
-                String hash = ImagePHash.calculateHash(context, imageUri);
-                String bucket = cursor.getString(1);
-                allImages.add(
-                        new HashItem(hash, imageUri, bucket)
-                );
-
-                if (!hash.isEmpty()) {
-                    allImages.add(new HashItem(hash, imageUri, bucket));
-                }
-            }
-            cursor.close();
-        }
-
-        // 2️⃣ MediaStore Downloads
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try (Cursor cursor = context.getContentResolver().query(
-                    baseUri,
-                    new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.MIME_TYPE},
-                    MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
-                    new String[]{"image/%"},
-                    MediaStore.MediaColumns.DATE_ADDED + " DESC"
-            )) {
-                if (cursor == null) return allImages;
+            if (cursor != null) {
+                int idCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID);
+                int bucketCol = cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                int dataCol = cursor.getColumnIndexOrThrow(
+                        MediaStore.MediaColumns.DATA);
 
                 while (cursor.moveToNext()) {
-                    long id = cursor.getLong(0);
+
+                    long id = cursor.getLong(idCol);
                     Uri imageUri = Uri.withAppendedPath(baseUri, String.valueOf(id));
 
-                    String hash = ImagePHash.calculateHash(context, imageUri);
-                    String bucket = cursor.getString(1);
-                    if (!hash.isEmpty()) {
-                        allImages.add(new HashItem(hash, imageUri, bucket));
-                    }
+                    if (addedUris.contains(imageUri.toString())) continue;
+                    addedUris.add(imageUri.toString());
+
+                    String bucketName = cursor.getString(bucketCol);
+                    String dataPath = cursor.getString(dataCol);
+                    String folderName = resolveFolderName(bucketName, dataPath);
+                    allImages.add(new HashItem(null, imageUri, folderName));
                 }
-                cursor.close();
             }
         }
 
-        // 3️⃣ Dosya sistemi Downloads klasörü
-        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        if (downloadDir.exists() && downloadDir.isDirectory()) {
-            File[] files = downloadDir.listFiles((dir, name) -> {
+        File downloadsDir =
+                Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS);
+
+        if (downloadsDir.exists() && downloadsDir.isDirectory()) {
+            File[] files = downloadsDir.listFiles((dir, name) -> {
                 String lower = name.toLowerCase();
-                return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
+                return lower.endsWith(".jpg")
+                        || lower.endsWith(".jpeg")
+                        || lower.endsWith(".png");
             });
 
             if (files != null) {
-                for (File f : files) {
-                    String path = f.getAbsolutePath();
-                    if (!existingPaths.contains(path)) {
-                        existingPaths.add(path);
-                        Uri uri = Uri.fromFile(f);
-                        String hash = ImagePHash.calculateHash(context, uri);
-                        String bucket = "Downloads";
-                        allImages.add(new HashItem(hash, uri, bucket));
+                for (File file : files) {
 
-                        // MediaScanner ile indexle
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            MediaScannerConnection.scanFile(
-                                    context,
-                                    new String[]{path},
-                                    new String[]{"image/*"},
-                                    null
-                            );
-                        }
-                    }
+                    Uri uri = Uri.fromFile(file);
+                    if (addedUris.contains(uri.toString())) continue;
+                    addedUris.add(uri.toString());
                 }
             }
         }
@@ -111,4 +88,20 @@ public class LoadingImage {
         return allImages;
     }
 
+    private static String resolveFolderName(String bucketName, String dataPath) {
+
+        if (bucketName != null && !bucketName.trim().isEmpty()) {
+            return bucketName;
+        }
+
+        if (dataPath != null) {
+            File file = new File(dataPath);
+            File parent = file.getParentFile();
+            if (parent != null) {
+                return parent.getName();
+            }
+        }
+
+        return "Unknown";
+    }
 }

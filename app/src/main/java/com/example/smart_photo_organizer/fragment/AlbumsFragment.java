@@ -1,9 +1,7 @@
 package com.example.smart_photo_organizer.fragment;
 
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,23 +25,29 @@ import java.util.List;
 
 public class AlbumsFragment extends Fragment {
 
-    RecyclerView recyclerView;
-    FolderItemAdapter adapter;
-    List<FolderItem> folderList = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private FolderItemAdapter adapter;
+    private final List<FolderItem> folderList = new ArrayList<>();
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
+
         return inflater.inflate(R.layout.fragment_albums, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState) {
+
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewFolders);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         loadImageFolders();
     }
@@ -55,6 +59,7 @@ public class AlbumsFragment extends Fragment {
     }
 
     private void loadImageFolders() {
+
         folderList.clear();
 
         ArrayList<HashItem> allImages =
@@ -64,8 +69,7 @@ public class AlbumsFragment extends Fragment {
 
         for (HashItem item : allImages) {
 
-            String folderName = item.bucketName;
-            if (folderName == null) folderName = "Unknown";
+            String folderName = item.bucketName; // artık temiz
 
             FolderItem folderItem = folderMap.get(folderName);
 
@@ -75,7 +79,7 @@ public class AlbumsFragment extends Fragment {
 
                 folderItem = new FolderItem(
                         folderName,
-                        item.uri,   // preview
+                        item.uri,
                         uris
                 );
 
@@ -111,6 +115,4 @@ public class AlbumsFragment extends Fragment {
 
         recyclerView.setAdapter(adapter);
     }
-
-
 }

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 public class ImageGridFragment extends Fragment {
     ArrayList<Uri> images;
+    RecyclerView recyclerView;
 
 
     @Nullable
@@ -30,7 +31,12 @@ public class ImageGridFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_image_grid, container, false);
 
-        RecyclerView recyclerView = view.findViewById(R.id.recyclerImages);
+        recyclerView = view.findViewById(R.id.recyclerImages);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setItemViewCacheSize(20);
+        recyclerView.setDrawingCacheEnabled(true);
+        recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
 
         images = getArguments() != null ? getArguments().getParcelableArrayList("images") : new ArrayList<>();
