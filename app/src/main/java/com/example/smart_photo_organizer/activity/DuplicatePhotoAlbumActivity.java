@@ -68,15 +68,15 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
                 List<HashItem> fetchedImages = ImageFetcher.loadAllImages(this);
                 List<List<HashItem>> localGroups = new ArrayList<>();
 
-                // Benzer fotoğrafları grupla (Ağır İşlem)
+                // Benzer fotoğrafları grupla
                 for (HashItem item : fetchedImages) {
-                    if (item.hash == null) {
+                    if (item.hash == 0L) {
                         item.hash = ImagePHash.calculateHash(this, item.uri);
                     }
 
                     boolean added = false;
                     for (List<HashItem> group : localGroups) {
-                        String representativeHash = group.get(0).hash;
+                        long representativeHash = group.get(0).hash;
                         int distance = ImagePHash.hammingDistance(item.hash, representativeHash);
 
                         if (distance <= HAMMING_THRESHOLD) {

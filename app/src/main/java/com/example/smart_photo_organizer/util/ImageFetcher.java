@@ -3,6 +3,7 @@ package com.example.smart_photo_organizer.util;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -81,7 +82,7 @@ public class ImageFetcher {
 
                 String folderName = resolveFolderName(bucket, relativePath);
 
-                out.add(new HashItem(null, imageUri, folderName));
+                out.add(new HashItem(0L, imageUri, folderName));
             }
 
         } catch (Exception e) {
@@ -150,7 +151,7 @@ public class ImageFetcher {
                 String relativePath = cursor.getString(pathCol);
 
                 out.add(new HashItem(
-                        null,
+                        0L,
                         imageUri,
                         resolveFolderName("Download", relativePath)
                 ));
@@ -160,7 +161,6 @@ public class ImageFetcher {
             e.printStackTrace();
         }
     }
-
 
     private static String resolveFolderName(
             String bucketName,
