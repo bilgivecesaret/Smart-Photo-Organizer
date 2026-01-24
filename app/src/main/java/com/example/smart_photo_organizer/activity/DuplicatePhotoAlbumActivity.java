@@ -70,7 +70,9 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
                 // Benzer fotoğrafları grupla (Ağır İşlem)
                 for (HashItem item : fetchedImages) {
-                    if (item.hash == null || item.hash.isEmpty()) continue;
+                    if (item.hash == null) {
+                        item.hash = ImagePHash.calculateHash(this, item.uri);
+                    }
 
                     boolean added = false;
                     for (List<HashItem> group : localGroups) {

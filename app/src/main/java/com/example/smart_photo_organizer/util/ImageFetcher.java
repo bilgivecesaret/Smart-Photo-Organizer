@@ -43,10 +43,8 @@ public class ImageFetcher {
 
                     // ÖNEMLİ: Hash hesaplama ağır bir işlemdir.
                     // İlk yüklemede null bırakıp, sadece Duplicate araması yapıldığında hesaplatmak daha performanslıdır.
-                    // Ancak senin DuplicatePhotoAlbumActivity kodun item.hash'in dolu olmasını bekliyor:
-                    String hash = ImagePHash.calculateHash(context, contentUri);
 
-                    items.add(new HashItem(hash, contentUri, bucketName));
+                    items.add(new HashItem(null, contentUri, bucketName));
                 }
             }
         } catch (Exception e) {
