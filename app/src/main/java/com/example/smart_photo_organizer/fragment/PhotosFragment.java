@@ -1,6 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
@@ -11,14 +11,13 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.content.ContentResolver;
-
 
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.ImageGridAdapter;
@@ -26,129 +25,127 @@ import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.ImageFetcher;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
+import java.util.List;
 
 public class PhotosFragment extends Fragment {
 
-    private RecyclerView recyclerView;
     private ImageGridAdapter adapter;
+    private ProgressBar progressBar;
 
-    private ArrayList<Uri> imageUris = new ArrayList<>();
+    private final ArrayList<Uri> imageUris = new ArrayList<>();
 
-    private ContentObserver mediaObserver;
+    private ContentObserver observer;
     private final Handler debounceHandler = new Handler(Looper.getMainLooper());
-    private static final long DEBOUNCE_DELAY = 600; // ms
-
-    private final Runnable reloadRunnable = () -> {
-        if (!isAdded()) return;
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-
-            Context context = getContext();
-            if (context == null) return;
-            ArrayList<HashItem> allImages = ImageFetcher.loadAllImages(context);
-
-            ArrayList<Uri> newUris = new ArrayList<>();
-            for (HashItem item : allImages) {
-                newUris.add(item.uri);
-            }
-
-            requireActivity().runOnUiThread(() -> {
-                imageUris.clear();
-                imageUris.addAll(newUris);
-                adapter.notifyDataSetChanged();
-            });
-        });
-    };
+    private static final long DEBOUNCE = 600;
 
     @Nullable
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+            @Nullable Bundle savedInstanceState
+    ) {
+        View view = inflater.inflate(
+                R.layout.fragment_photos, container, false
+        );
 
-        View view = inflater.inflate(R.layout.fragment_photos, container, false);
+        RecyclerView recyclerView = view.findViewById(R.id.recyclerImages);
+        progressBar = view.findViewById(R.id.progressBar);
 
-        recyclerView = view.findViewById(R.id.recyclerImages);
-        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
-        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(
+                new GridLayoutManager(requireContext(), 3)
+        );
 
-        adapter = new ImageGridAdapter(requireContext(), imageUris, this);
+        adapter = new ImageGridAdapter(
+                requireContext(),
+                imageUris,
+                this
+        );
         recyclerView.setAdapter(adapter);
 
-        loadInitialImages();
+        loadImages();
 
         return view;
     }
 
-    private void loadInitialImages() {
-        Executors.newSingleThreadExecutor().execute(() -> {
+    @SuppressLint("NotifyDataSetChanged")
+    private void loadImages() {
+        imageUris.clear();
+        adapter.notifyDataSetChanged();
+        progressBar.setVisibility(View.VISIBLE);
 
-            ArrayList<HashItem> allImages =
-                    ImageFetcher.loadAllImages(requireContext());
+        ImageFetcher.loadAllImagesAsync(
+                requireContext(),
+                40,
+                new ImageFetcher.ImageBatchCallback() {
 
-            ArrayList<Uri> uris = new ArrayList<>();
-            for (HashItem item : allImages) {
-                uris.add(item.uri);
-            }
+                    @Override
+                    public void onBatch(List<HashItem> batch) {
+                        int start = imageUris.size();
+                        for (HashItem item : batch) {
+                            imageUris.add(item.uri);
+                        }
+                        adapter.notifyItemRangeInserted(
+                                start,
+                                batch.size()
+                        );
+                    }
 
-            requireActivity().runOnUiThread(() -> {
-                imageUris.clear();
-                imageUris.addAll(uris);
-                adapter.notifyDataSetChanged();
-            });
-        });
+                    @Override
+                    public void onComplete() {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                }
+        );
     }
 
-    // 🔥 ContentObserver setup
-    private void setupContentObserver() {
+    private void setupObserver() {
+        if (observer != null) return;
 
-        if (mediaObserver != null) return;
-
-        mediaObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+        observer = new ContentObserver(
+                new Handler(Looper.getMainLooper())
+        ) {
             @Override
             public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-
-                debounceHandler.removeCallbacks(reloadRunnable);
-                debounceHandler.postDelayed(reloadRunnable, DEBOUNCE_DELAY);
+                debounceHandler.removeCallbacksAndMessages(null);
+                debounceHandler.postDelayed(
+                        PhotosFragment.this::loadImages,
+                        DEBOUNCE
+                );
             }
         };
 
-        ContentResolver resolver = requireContext().getContentResolver();
-
-        resolver.registerContentObserver(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                true,
-                mediaObserver
-        );
+        requireContext().getContentResolver()
+                .registerContentObserver(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        true,
+                        observer
+                );
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            resolver.registerContentObserver(
-                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                    true,
-                    mediaObserver
-            );
+            requireContext().getContentResolver()
+                    .registerContentObserver(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            true,
+                            observer
+                    );
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        setupContentObserver();
+        setupObserver();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-
-        if (mediaObserver != null) {
+        if (observer != null) {
             requireContext().getContentResolver()
-                    .unregisterContentObserver(mediaObserver);
-            mediaObserver = null;
+                    .unregisterContentObserver(observer);
+            observer = null;
         }
-
         debounceHandler.removeCallbacksAndMessages(null);
     }
 }

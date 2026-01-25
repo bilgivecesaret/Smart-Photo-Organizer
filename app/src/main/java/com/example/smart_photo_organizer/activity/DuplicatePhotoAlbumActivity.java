@@ -1,15 +1,14 @@
 package com.example.smart_photo_organizer.activity;
 
-import static com.example.smart_photo_organizer.util.ImageFetcher.loadAllImages;
-
-import android.database.ContentObserver;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ProgressBar;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -26,16 +25,23 @@ import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    DuplicateAlbumAdapter adapter;
-    List<HashItem> allImages;
-    List<List<HashItem>> groups;
-    private final List<DuplicateGroup> duplicateGroups = new ArrayList<>();
-    private static final int HAMMING_THRESHOLD = 8;
+    private ProgressBar progressBar;
+
+    private final List<HashItem> allImages = new ArrayList<>();
+    private final List<DuplicateGroup> groups = new ArrayList<>();
+
+    private DuplicateAlbumAdapter adapter;
+
+    private static final int HAMMING_THRESHOLD = 2;
+
+    private ActivityResultLauncher<Intent> gridLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,114 +55,142 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
         });
 
         recyclerView = findViewById(R.id.recyclerDuplicateAlbums);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        findSimilarPhotos();
-    }
+        progressBar = findViewById(R.id.progressBar);
 
-    private void findSimilarPhotos() {
-        ProgressBar progressBar = findViewById(R.id.progressBar);
+        recyclerView.setLayoutManager(
+                new LinearLayoutManager(this)
+        );
 
-        // 1. İşlem başlamadan önce UI hazırlığı
-        if (progressBar != null) {
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        // 2. Tek bir arka plan thread'i başlatıyoruz
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                // Veriyi temizle ve yükle
-                List<HashItem> fetchedImages = ImageFetcher.loadAllImages(this);
-                List<List<HashItem>> localGroups = new ArrayList<>();
-
-                // Benzer fotoğrafları grupla
-                for (HashItem item : fetchedImages) {
-                    if (item.hash == 0L) {
-                        item.hash = ImagePHash.calculateHash(this, item.uri);
-                    }
-
-                    boolean added = false;
-                    for (List<HashItem> group : localGroups) {
-                        long representativeHash = group.get(0).hash;
-                        int distance = ImagePHash.hammingDistance(item.hash, representativeHash);
-
-                        if (distance <= HAMMING_THRESHOLD) {
-                            group.add(item);
-                            added = true;
-                            break;
+        gridLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // 🔹 Grid'den silinen foto var mı diye kontrol et
+                        Intent data = result.getData();
+                        if (data != null && data.getBooleanExtra("photos_deleted", false)) {
+                            startScan();
                         }
                     }
-
-                    if (!added) {
-                        List<HashItem> newGroup = new ArrayList<>();
-                        newGroup.add(item);
-                        localGroups.add(newGroup);
-                    }
                 }
+        );
 
-                // UI için DuplicateGroup listesini hazırla
-                List<DuplicateGroup> resultList = new ArrayList<>();
-                for (List<HashItem> group : localGroups) {
-                    if (group.size() > 1) {
-                        List<Uri> uris = new ArrayList<>();
-                        for (HashItem hi : group) {
-                            uris.add(hi.uri);
-                        }
-                        resultList.add(new DuplicateGroup(group.get(0).hash, uris));
-                    }
-                }
-
-                // 3. UI GÜNCELLEMESİ (Mutlaka runOnUiThread içinde olmalı)
-                runOnUiThread(() -> {
-                    if (progressBar != null) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-
-                    duplicateGroups.clear();
-                    duplicateGroups.addAll(resultList);
-
-                    if (adapter == null) {
-                        adapter = new DuplicateAlbumAdapter(this, duplicateGroups);
-                        recyclerView.setAdapter(adapter);
-                    } else {
-                        adapter.notifyDataSetChanged();
-                    }
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> {
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
-                });
-            }
-        });
+        startScan();
     }
 
-    private final ContentObserver duplicateObserver = new ContentObserver(null) {
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            findSimilarPhotos();
-        }
+    private void startScan() {
+        allImages.clear();
+        groups.clear();
 
-    };
+        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setIndeterminate(true);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Sayfaya her geri dönüldüğünde (örneğin silme ekranından)
-        // listeyi arka planda tekrar tara.
-        findSimilarPhotos();
+        ImageFetcher.loadAllImagesAsync(
+                this,
+                50,
+                new ImageFetcher.ImageBatchCallback() {
 
-        getContentResolver().registerContentObserver(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                true,
-                duplicateObserver
+                    @Override
+                    public void onBatch(List<HashItem> batch) {
+                        allImages.addAll(batch);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        calculateHashes();
+                    }
+                }
         );
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        getContentResolver().unregisterContentObserver(duplicateObserver);
+    private void calculateHashes() {
+
+        progressBar.setIndeterminate(false);
+        progressBar.setMax(allImages.size());
+
+        ExecutorService executor =
+                Executors.newFixedThreadPool(
+                        Runtime.getRuntime().availableProcessors()
+                );
+
+        AtomicInteger done = new AtomicInteger(0);
+
+        for (HashItem item : allImages) {
+            executor.execute(() -> {
+
+                if (item.hash == 0L) {
+                    item.hash = ImagePHash.calculateHash(
+                            this, item.uri
+                    );
+                }
+
+                int progress = done.incrementAndGet();
+                runOnUiThread(() -> progressBar.setProgress(progress));
+            });
+        }
+
+        executor.shutdown();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            while (!executor.isTerminated()) { }
+
+            buildGroups();
+
+            runOnUiThread(() -> {
+                progressBar.setVisibility(View.GONE);
+                adapter = new DuplicateAlbumAdapter(this, groups,
+                        (intent, pos) -> gridLauncher.launch(intent));
+                recyclerView.setAdapter(adapter);
+            });
+        });
     }
+
+    private void buildGroups() {
+        List<List<HashItem>> temp = new ArrayList<>();
+
+        for (HashItem item : allImages) {
+            boolean added = false;
+
+            for (List<HashItem> group : temp) {
+
+                boolean fitsGroup = true;
+
+                // 🔥 KRİTİK NOKTA: tüm grup üyeleriyle karşılaştır
+                for (HashItem member : group) {
+                    if (ImagePHash.hammingDistance(
+                            item.hash,
+                            member.hash
+                    ) > HAMMING_THRESHOLD) {
+                        fitsGroup = false;
+                        break;
+                    }
+                }
+
+                if (fitsGroup) {
+                    group.add(item);
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added) {
+                List<HashItem> newGroup = new ArrayList<>();
+                newGroup.add(item);
+                temp.add(newGroup);
+            }
+        }
+
+        // sadece gerçek grupları ekle
+        for (List<HashItem> g : temp) {
+            if (g.size() > 1) {
+                List<Uri> uris = new ArrayList<>();
+                for (HashItem h : g) uris.add(h.uri);
+
+                groups.add(new DuplicateGroup(
+                        g.get(0).hash,
+                        uris
+                ));
+            }
+        }
+    }
+
 }

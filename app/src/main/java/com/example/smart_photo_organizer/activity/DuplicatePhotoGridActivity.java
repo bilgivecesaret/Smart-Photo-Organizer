@@ -1,6 +1,7 @@
 package com.example.smart_photo_organizer.activity;
 
 import android.app.PendingIntent;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -117,6 +118,10 @@ public class DuplicatePhotoGridActivity extends AppCompatActivity {
                 showSuccessDialog(formatSize(lastDeletedSize));
                 adapter.removeSelectedImages();
                 Toast.makeText(this, "Photos deleted", Toast.LENGTH_SHORT).show();
+                Intent result = new Intent();
+                result.putExtra("photos_deleted", true);
+                setResult(RESULT_OK, result);
+                finish();
             }
         });
     }
@@ -166,7 +171,10 @@ public class DuplicatePhotoGridActivity extends AppCompatActivity {
                 .setMessage("Başarıyla " + savedSpace + " kadar alan boşaltıldı.")
                 .setPositiveButton("Harika", (dialog, which) -> {
                     dialog.dismiss();
-                    finish(); // Genelde temizlik bitince kullanıcıyı albümlere geri göndeririz
+                    Intent result = new Intent();
+                    result.putExtra("photos_deleted", true);
+                    setResult(RESULT_OK, result);
+                    finish();
                 })
                 .setCancelable(false)
                 .show();

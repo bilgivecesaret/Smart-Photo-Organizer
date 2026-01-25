@@ -3,181 +3,176 @@ package com.example.smart_photo_organizer.util;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 
 import com.example.smart_photo_organizer.model.HashItem;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 public class ImageFetcher {
 
-    public static ArrayList<HashItem> loadAllImages(Context context) {
-
-        ArrayList<HashItem> result = new ArrayList<>();
-        Set<String> addedUris = new HashSet<>();
-
-        // 1️⃣ DCIM + Pictures + WhatsApp + SD Card
-        loadFromImages(context, result, addedUris);
-
-        // 2️⃣ Download klasörü
-        loadFromDownloads(context, result, addedUris);
-
-        return result;
+    public interface ImageBatchCallback {
+        void onBatch(List<HashItem> batch);
+        void onComplete();
     }
 
-    // IMAGES (DCIM / Pictures)
-    private static void loadFromImages(
+    public static void loadAllImagesAsync(
             Context context,
-            ArrayList<HashItem> out,
-            Set<String> addedUris
+            int batchSize,
+            ImageBatchCallback callback
     ) {
+        Executors.newSingleThreadExecutor().execute(() -> {
 
-        Uri uri = MediaStore.Images.Media.getContentUri(
-                MediaStore.VOLUME_EXTERNAL
-        );
+            Set<String> addedUris = new HashSet<>();
+            List<HashItem> batch = new ArrayList<>();
+            Handler mainHandler = new Handler(Looper.getMainLooper());
 
-        String[] projection = {
-                MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-                MediaStore.MediaColumns.RELATIVE_PATH
-        };
-
-        String selection = MediaStore.MediaColumns.MIME_TYPE + " LIKE ?";
-        String[] args = {"image/%"};
-
-        try (Cursor cursor = context.getContentResolver().query(
-                uri,
-                projection,
-                selection,
-                args,
-                MediaStore.Images.Media.DATE_ADDED + " DESC"
-        )) {
-
-            if (cursor == null) return;
-
-            int idCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Images.Media._ID
+            // ===== IMAGES =====
+            Uri imagesUri = MediaStore.Images.Media.getContentUri(
+                    MediaStore.VOLUME_EXTERNAL
             );
-            int bucketCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME
-            );
-            int pathCol = cursor.getColumnIndexOrThrow(
+
+            String[] projection = {
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
                     MediaStore.MediaColumns.RELATIVE_PATH
-            );
+            };
 
-            while (cursor.moveToNext()) {
+            try (Cursor cursor = context.getContentResolver().query(
+                    imagesUri,
+                    projection,
+                    MediaStore.MediaColumns.MIME_TYPE + " LIKE ?",
+                    new String[]{"image/%"},
+                    MediaStore.Images.Media.DATE_ADDED + " DESC"
+            )) {
 
-                long id = cursor.getLong(idCol);
-                Uri imageUri = ContentUris.withAppendedId(uri, id);
+                if (cursor != null) {
+                    int idCol = cursor.getColumnIndexOrThrow(
+                            MediaStore.Images.Media._ID
+                    );
+                    int bucketCol = cursor.getColumnIndexOrThrow(
+                            MediaStore.Images.Media.BUCKET_DISPLAY_NAME
+                    );
+                    int pathCol = cursor.getColumnIndexOrThrow(
+                            MediaStore.MediaColumns.RELATIVE_PATH
+                    );
 
-                if (!addedUris.add(imageUri.toString())) continue;
+                    while (cursor.moveToNext()) {
+                        long id = cursor.getLong(idCol);
+                        Uri uri = ContentUris.withAppendedId(imagesUri, id);
 
-                String bucket = cursor.getString(bucketCol);
-                String relativePath = cursor.getString(pathCol);
+                        if (!addedUris.add(uri.toString())) continue;
 
-                String folderName = resolveFolderName(bucket, relativePath);
+                        batch.add(new HashItem(
+                                0L,
+                                uri,
+                                resolveFolderName(
+                                        cursor.getString(bucketCol),
+                                        cursor.getString(pathCol)
+                                )
+                        ));
 
-                out.add(new HashItem(0L, imageUri, folderName));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // DOWNLOADS (image/*.jpg)
-    private static void loadFromDownloads(
-            Context context,
-            ArrayList<HashItem> out,
-            Set<String> addedUris
-    ) {
-
-        Uri uri = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            uri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
-        }
-
-        String[] projection = {
-                MediaStore.Downloads._ID,
-                MediaStore.Downloads.RELATIVE_PATH,
-                MediaStore.Downloads.DISPLAY_NAME
-        };
-
-        try (Cursor cursor = context.getContentResolver().query(
-                uri,
-                projection,
-                null,
-                null,
-                MediaStore.Downloads.DATE_ADDED + " DESC"
-        )) {
-
-            if (cursor == null) return;
-
-            int idCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Downloads._ID
-            );
-            int pathCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Downloads.RELATIVE_PATH
-            );
-            int nameCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Downloads.DISPLAY_NAME
-            );
-
-            while (cursor.moveToNext()) {
-
-                String name = cursor.getString(nameCol);
-                if (name == null) continue;
-
-                String lower = name.toLowerCase();
-
-                // uzantıya göre filtre
-                if (!(lower.endsWith(".jpg")
-                        || lower.endsWith(".jpeg")
-                        || lower.endsWith(".png")
-                        || lower.endsWith(".webp"))) {
-                    continue;
+                        if (batch.size() >= batchSize) {
+                            List<HashItem> deliver = new ArrayList<>(batch);
+                            batch.clear();
+                            mainHandler.post(() -> callback.onBatch(deliver));
+                        }
+                    }
                 }
 
-                long id = cursor.getLong(idCol);
-                Uri imageUri = ContentUris.withAppendedId(uri, id);
-
-                if (!addedUris.add(imageUri.toString())) continue;
-
-                String relativePath = cursor.getString(pathCol);
-
-                out.add(new HashItem(
-                        0L,
-                        imageUri,
-                        resolveFolderName("Download", relativePath)
-                ));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            // ===== DOWNLOADS =====
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Uri downloadUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+
+                String[] downloadProjection = {
+                        MediaStore.Downloads._ID,
+                        MediaStore.Downloads.DISPLAY_NAME,
+                        MediaStore.Downloads.RELATIVE_PATH
+                };
+
+                try (Cursor cursor = context.getContentResolver().query(
+                        downloadUri,
+                        downloadProjection,
+                        null,
+                        null,
+                        MediaStore.Downloads.DATE_ADDED + " DESC"
+                )) {
+
+                    if (cursor != null) {
+                        int idCol = cursor.getColumnIndexOrThrow(
+                                MediaStore.Downloads._ID
+                        );
+                        int nameCol = cursor.getColumnIndexOrThrow(
+                                MediaStore.Downloads.DISPLAY_NAME
+                        );
+                        int pathCol = cursor.getColumnIndexOrThrow(
+                                MediaStore.Downloads.RELATIVE_PATH
+                        );
+
+                        while (cursor.moveToNext()) {
+                            String name = cursor.getString(nameCol);
+                            if (name == null) continue;
+
+                            String lower = name.toLowerCase();
+                            if (!(lower.endsWith(".jpg")
+                                    || lower.endsWith(".jpeg")
+                                    || lower.endsWith(".png")
+                                    || lower.endsWith(".webp"))) continue;
+
+                            long id = cursor.getLong(idCol);
+                            Uri uri = ContentUris.withAppendedId(downloadUri, id);
+
+                            if (!addedUris.add(uri.toString())) continue;
+
+                            batch.add(new HashItem(
+                                    0L,
+                                    uri,
+                                    resolveFolderName("Download",
+                                            cursor.getString(pathCol))
+                            ));
+
+                            if (batch.size() >= batchSize) {
+                                List<HashItem> deliver = new ArrayList<>(batch);
+                                batch.clear();
+                                mainHandler.post(() -> callback.onBatch(deliver));
+                            }
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (!batch.isEmpty()) {
+                mainHandler.post(() -> callback.onBatch(batch));
+            }
+
+            mainHandler.post(callback::onComplete);
+        });
     }
 
     private static String resolveFolderName(
-            String bucketName,
+            String bucket,
             String relativePath
     ) {
-
-        if (bucketName != null && !bucketName.trim().isEmpty()) {
-            return bucketName;
-        }
-
+        if (bucket != null && !bucket.isEmpty()) return bucket;
         if (relativePath != null) {
             String[] parts = relativePath.split("/");
-            if (parts.length > 0) {
-                return parts[parts.length - 1];
-            }
+            return parts[parts.length - 1];
         }
-
         return "Unknown";
     }
 }

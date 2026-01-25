@@ -21,74 +21,41 @@ import com.example.smart_photo_organizer.util.ImageFetcher;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AlbumsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private FolderItemAdapter adapter;
+
     private final List<FolderItem> folderList = new ArrayList<>();
+    private final Map<String, FolderItem> folderMap = new HashMap<>();
+
+    private boolean loading = false;
 
     @Nullable
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-
-        return inflater.inflate(R.layout.fragment_albums, container, false);
+            @Nullable Bundle savedInstanceState
+    ) {
+        return inflater.inflate(
+                R.layout.fragment_albums, container, false
+        );
     }
 
     @Override
     public void onViewCreated(
             @NonNull View view,
-            @Nullable Bundle savedInstanceState) {
-
+            @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.recyclerViewFolders);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-
-        loadImageFolders();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadImageFolders();
-    }
-
-    private void loadImageFolders() {
-
-        folderList.clear();
-
-        ArrayList<HashItem> allImages =
-                ImageFetcher.loadAllImages(requireContext());
-
-        HashMap<String, FolderItem> folderMap = new HashMap<>();
-
-        for (HashItem item : allImages) {
-
-            String folderName = item.bucketName; // artık temiz
-
-            FolderItem folderItem = folderMap.get(folderName);
-
-            if (folderItem == null) {
-                ArrayList<Uri> uris = new ArrayList<>();
-                uris.add(item.uri);
-
-                folderItem = new FolderItem(
-                        folderName,
-                        item.uri,
-                        uris
-                );
-
-                folderMap.put(folderName, folderItem);
-            } else {
-                folderItem.getImageUris().add(item.uri);
-            }
-        }
-
-        folderList.addAll(folderMap.values());
+        recyclerView.setLayoutManager(
+                new LinearLayoutManager(requireContext())
+        );
 
         adapter = new FolderItemAdapter(
                 requireContext(),
@@ -99,7 +66,7 @@ public class AlbumsFragment extends Fragment {
                     Bundle args = new Bundle();
                     args.putParcelableArrayList(
                             "images",
-                            folderItem.getImageUris()
+                            new ArrayList<>(folderItem.getImageUris())
                     );
                     fragment.setArguments(args);
 
@@ -113,5 +80,69 @@ public class AlbumsFragment extends Fragment {
         );
 
         recyclerView.setAdapter(adapter);
+
+        loadImageFolders();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadImageFolders();
+    }
+
+    private void loadImageFolders() {
+
+        if (loading) return;
+        loading = true;
+
+        folderList.clear();
+        folderMap.clear();
+        adapter.notifyDataSetChanged();
+
+        ImageFetcher.loadAllImagesAsync(
+                requireContext(),
+                50, // batch size (önemli değil, klasör için birikir)
+                new ImageFetcher.ImageBatchCallback() {
+
+                    @Override
+                    public void onBatch(List<HashItem> batch) {
+
+                        for (HashItem item : batch) {
+                            String folderName = item.bucketName;
+
+                            FolderItem folder =
+                                    folderMap.get(folderName);
+
+                            if (folder == null) {
+                                ArrayList<Uri> uris =
+                                        new ArrayList<>();
+                                uris.add(item.uri);
+
+                                folder = new FolderItem(
+                                        folderName,
+                                        item.uri,
+                                        uris
+                                );
+
+                                folderMap.put(folderName, folder);
+                            } else {
+                                folder.getImageUris()
+                                        .add(item.uri);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                        folderList.addAll(
+                                folderMap.values()
+                        );
+
+                        adapter.notifyDataSetChanged();
+                        loading = false;
+                    }
+                }
+        );
     }
 }

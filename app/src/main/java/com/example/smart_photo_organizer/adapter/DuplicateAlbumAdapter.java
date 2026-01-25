@@ -25,10 +25,18 @@ public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAd
     Context context;
     List<DuplicateGroup> groups;
 
-    public DuplicateAlbumAdapter(Context context, List<DuplicateGroup> groups) {
+    private final OnAlbumClick callback;
+
+    public interface OnAlbumClick {
+        void openGrid(Intent intent, int position);
+    }
+
+    public DuplicateAlbumAdapter(Context context, List<DuplicateGroup> groups, OnAlbumClick callback) {
         this.context = context;
         this.groups = groups;
+        this.callback = callback;
     }
+
 
     @NonNull
     @Override
@@ -54,7 +62,7 @@ public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAd
                     "images",
                     new ArrayList<>(group.images)
             );
-            context.startActivity(intent);
+            callback.openGrid(intent, position);
         });
     }
 
