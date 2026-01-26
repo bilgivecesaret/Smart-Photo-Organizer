@@ -1,5 +1,5 @@
 @echo off
-"C:\\Users\\UgurOzkan\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe" ^
+"C:\\Users\\Burak\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe" ^
   -C ^
-  "C:\\Users\\UgurOzkan\\Documents\\GitHub\\Smart-Photo-Organizer\\openCV\\.cxx\\Debug\\516f252b\\x86_64" ^
+  "C:\\Users\\Burak\\Desktop\\Smart-Photo-Organizer\\openCV\\.cxx\\Debug\\516f252b\\x86_64" ^
   opencv_jni_shared

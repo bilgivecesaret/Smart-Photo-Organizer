@@ -1,5 +1,5 @@
 {
-  "installationFolder": "C:\\Users\\UgurOzkan\\Documents\\GitHub\\Smart-Photo-Organizer\\openCV\\build\\intermediates\\prefab_package\\debug\\prefab",
+  "installationFolder": "C:\\Users\\Burak\\Desktop\\Smart-Photo-Organizer\\openCV\\build\\intermediates\\prefab_package\\debug\\prefab",
   "gradlePath": ":openCV",
   "packageInfo": {
     "packageName": "openCV",
@@ -8,7 +8,7 @@
     "modules": [
       {
         "moduleName": "opencv_jni_shared",
-        "moduleHeaders": "C:\\Users\\UgurOzkan\\Documents\\GitHub\\Smart-Photo-Organizer\\openCV\\native\\jni\\include",
+        "moduleHeaders": "C:\\Users\\Burak\\Desktop\\Smart-Photo-Organizer\\openCV\\native\\jni\\include",
         "moduleExportLibraries": [],
         "abis": []
       }

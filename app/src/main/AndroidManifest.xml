@@ -39,6 +39,10 @@
             android:name=".activity.DuplicatePhotoGridActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activity.BlurredPhotoActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
