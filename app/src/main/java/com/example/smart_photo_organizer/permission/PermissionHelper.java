@@ -45,8 +45,6 @@ public class PermissionHelper {
 
         if (!granted) {
             ActivityCompat.requestPermissions(activity, getStoragePermissions(), STORAGE_PERMISSION_CODE);
-        } else {
-            Toast.makeText(context, "Storage permissions already granted", Toast.LENGTH_SHORT).show();
         }
     }
 

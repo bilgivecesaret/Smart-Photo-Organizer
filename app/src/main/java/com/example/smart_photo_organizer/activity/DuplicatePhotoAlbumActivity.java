@@ -24,9 +24,7 @@ import com.example.smart_photo_organizer.util.ImageFetcher;
 import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,6 +40,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     private DuplicateAlbumAdapter adapter;
 
     private ActivityResultLauncher<Intent> gridLauncher;
+    private static final int HAMMING_THRESHOLD = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,17 +144,43 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     }
 
     private void buildGroups() {
-        Map<Long, List<Uri>> hashMap = new HashMap<>();
+        List<List<HashItem>> temp = new ArrayList<>();
 
         for (HashItem item : allImages) {
-            if (item.hash == 0L) continue;
-            hashMap.computeIfAbsent(item.hash, k -> new ArrayList<>()).add(item.uri);
+            boolean added = false;
+
+            for (List<HashItem> group : temp) {
+                boolean fitsGroup = true;
+
+                // tüm grup üyeleriyle karşılaştır
+                for (HashItem member : group) {
+                    int distance = ImagePHash.hammingDistance(item.hash, member.hash);
+                    if (distance > HAMMING_THRESHOLD) {
+                        fitsGroup = false;
+                        break;
+                    }
+                }
+
+                if (fitsGroup) {
+                    group.add(item);
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added) {
+                List<HashItem> newGroup = new ArrayList<>();
+                newGroup.add(item);
+                temp.add(newGroup);
+            }
         }
 
         groups.clear();
-        for (Map.Entry<Long, List<Uri>> entry : hashMap.entrySet()) {
-            if (entry.getValue().size() > 1) {
-                groups.add(new DuplicateGroup(entry.getKey(), entry.getValue()));
+        for (List<HashItem> g : temp) {
+            if (g.size() > 1) {
+                List<Uri> uris = new ArrayList<>();
+                for (HashItem h : g) uris.add(h.uri);
+                groups.add(new DuplicateGroup(g.get(0).hash, uris));
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.example.smart_photo_organizer.fragment;
 
-import android.annotation.SuppressLint;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
@@ -53,7 +52,7 @@ public class PhotosFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
 
         recyclerView.setLayoutManager(
-                new GridLayoutManager(requireContext(), 3)
+                new GridLayoutManager(requireContext(), 4)
         );
 
         adapter = new ImageGridAdapter(
@@ -68,15 +67,13 @@ public class PhotosFragment extends Fragment {
         return view;
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private void loadImages() {
         imageUris.clear();
         adapter.notifyDataSetChanged();
-        progressBar.setVisibility(View.VISIBLE);
 
         ImageFetcher.loadAllImagesAsync(
                 requireContext(),
-                40,
+                20,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
@@ -94,24 +91,40 @@ public class PhotosFragment extends Fragment {
                     @Override
                     public void onComplete() {
                         progressBar.setVisibility(View.GONE);
+                        showAppropriateFragment();
                     }
                 }
         );
     }
 
+    private void showAppropriateFragment() {
+        if (imageUris.isEmpty()) {
+            // Resim yoksa NoImageFragment göster
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new NoImageFragment())
+                    .commit();
+        } else {
+            // Resim varsa PhotosFragment göster
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, this)
+                    .commit();
+        }
+    }
+
+
     private void setupObserver() {
         if (observer != null) return;
 
-        observer = new ContentObserver(
-                new Handler(Looper.getMainLooper())
-        ) {
+        observer = new ContentObserver(new Handler(Looper.getMainLooper())) {
             @Override
             public void onChange(boolean selfChange) {
                 debounceHandler.removeCallbacksAndMessages(null);
-                debounceHandler.postDelayed(
-                        PhotosFragment.this::loadImages,
-                        DEBOUNCE
-                );
+                debounceHandler.postDelayed(() -> {
+                    // Resimleri tekrar yükle
+                    loadImages();
+                }, DEBOUNCE);
             }
         };
 
