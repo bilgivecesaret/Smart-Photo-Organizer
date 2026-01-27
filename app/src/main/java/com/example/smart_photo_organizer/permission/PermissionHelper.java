@@ -1,7 +1,5 @@
 package com.example.smart_photo_organizer.permission;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -12,8 +10,6 @@ import android.os.Build;
 import android.provider.Settings;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -26,26 +22,31 @@ public class PermissionHelper {
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
             };
-        }else if(Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
+        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
             return new String[]{
                     Manifest.permission.READ_MEDIA_IMAGES
             };
-        }else {
+        } else {
             return new String[]{
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
         }
     }
+
     public static void checkStoragePermissions(Context context, Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(activity, getStoragePermissions(), STORAGE_PERMISSION_CODE);
+        boolean granted = true;
+        for (String perm : getStoragePermissions()) {
+            if (ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED) {
+                granted = false;
+                break;
             }
-        }else{
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(activity, getStoragePermissions(), STORAGE_PERMISSION_CODE);
-            }
+        }
+
+        if (!granted) {
+            ActivityCompat.requestPermissions(activity, getStoragePermissions(), STORAGE_PERMISSION_CODE);
+        } else {
+            Toast.makeText(context, "Storage permissions already granted", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -55,5 +56,4 @@ public class PermissionHelper {
         intent.setData(uri);
         context.startActivity(intent);
     }
-
- }
+}

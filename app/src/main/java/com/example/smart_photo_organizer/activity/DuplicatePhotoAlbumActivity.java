@@ -24,7 +24,9 @@ import com.example.smart_photo_organizer.util.ImageFetcher;
 import com.example.smart_photo_organizer.util.ImagePHash;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,8 +40,6 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     private final List<DuplicateGroup> groups = new ArrayList<>();
 
     private DuplicateAlbumAdapter adapter;
-
-    private static final int HAMMING_THRESHOLD = 2;
 
     private ActivityResultLauncher<Intent> gridLauncher;
 
@@ -65,7 +65,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        // 🔹 Grid'den silinen foto var mı diye kontrol et
+                        // Grid'den silinen foto var mı diye kontrol et
                         Intent data = result.getData();
                         if (data != null && data.getBooleanExtra("photos_deleted", false)) {
                             startScan();
@@ -86,7 +86,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
         ImageFetcher.loadAllImagesAsync(
                 this,
-                50,
+                20,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
@@ -145,50 +145,17 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     }
 
     private void buildGroups() {
-        List<List<HashItem>> temp = new ArrayList<>();
+        Map<Long, List<Uri>> hashMap = new HashMap<>();
 
         for (HashItem item : allImages) {
-            boolean added = false;
-
-            for (List<HashItem> group : temp) {
-
-                boolean fitsGroup = true;
-
-                // 🔥 KRİTİK NOKTA: tüm grup üyeleriyle karşılaştır
-                for (HashItem member : group) {
-                    if (ImagePHash.hammingDistance(
-                            item.hash,
-                            member.hash
-                    ) > HAMMING_THRESHOLD) {
-                        fitsGroup = false;
-                        break;
-                    }
-                }
-
-                if (fitsGroup) {
-                    group.add(item);
-                    added = true;
-                    break;
-                }
-            }
-
-            if (!added) {
-                List<HashItem> newGroup = new ArrayList<>();
-                newGroup.add(item);
-                temp.add(newGroup);
-            }
+            if (item.hash == 0L) continue;
+            hashMap.computeIfAbsent(item.hash, k -> new ArrayList<>()).add(item.uri);
         }
 
-        // sadece gerçek grupları ekle
-        for (List<HashItem> g : temp) {
-            if (g.size() > 1) {
-                List<Uri> uris = new ArrayList<>();
-                for (HashItem h : g) uris.add(h.uri);
-
-                groups.add(new DuplicateGroup(
-                        g.get(0).hash,
-                        uris
-                ));
+        groups.clear();
+        for (Map.Entry<Long, List<Uri>> entry : hashMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                groups.add(new DuplicateGroup(entry.getKey(), entry.getValue()));
             }
         }
     }
