@@ -136,7 +136,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
                 long id = cursor.getLong(0);
                 String path = cursor.getString(1);
 
-                if (path != null && path.toLowerCase().contains("download") && new File(path).exists()) {
+                if (path != null && new File(path).exists()) {
                     candidateImages.add(new ScanItem(id, path));
                 }
             }
