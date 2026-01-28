@@ -62,7 +62,8 @@ public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHold
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            folderIcon = itemView.findViewById(R.id.folderIcon);
+
+            folderIcon = itemView.findViewById(R.id.imgPreview);
             txtFolderName = itemView.findViewById(R.id.txtFolderName);
         }
     }
