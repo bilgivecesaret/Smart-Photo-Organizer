@@ -1,5 +1,6 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.annotation.SuppressLint;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
@@ -31,6 +32,7 @@ public class PhotosFragment extends Fragment {
     private ImageGridAdapter adapter;
     private ProgressBar progressBar;
 
+    // Fotoğrafların tutulduğu gerçek listenin adı: imageUris
     private final ArrayList<Uri> imageUris = new ArrayList<>();
 
     private ContentObserver observer;
@@ -52,13 +54,16 @@ public class PhotosFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
 
         recyclerView.setLayoutManager(
-                new GridLayoutManager(requireContext(), 4)
+                new GridLayoutManager(requireContext(), 3)
         );
 
+        // DÜZELTİLEN KISIM:
+        // 1. 'uriList' yerine 'imageUris' kullanıldı.
+        // 2. 3. parametre olarak doğrudan 'getParentFragmentManager()' gönderildi.
         adapter = new ImageGridAdapter(
                 requireContext(),
                 imageUris,
-                this
+                getParentFragmentManager()
         );
         recyclerView.setAdapter(adapter);
 
@@ -67,17 +72,22 @@ public class PhotosFragment extends Fragment {
         return view;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void loadImages() {
+        if (!isAdded()) return; // Fragment bağlı değilse işlem yapma
+
         imageUris.clear();
         adapter.notifyDataSetChanged();
+        progressBar.setVisibility(View.VISIBLE);
 
         ImageFetcher.loadAllImagesAsync(
                 requireContext(),
-                20,
+                40,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
                     public void onBatch(List<HashItem> batch) {
+                        if (!isAdded()) return;
                         int start = imageUris.size();
                         for (HashItem item : batch) {
                             imageUris.add(item.uri);
@@ -90,41 +100,27 @@ public class PhotosFragment extends Fragment {
 
                     @Override
                     public void onComplete() {
-                        progressBar.setVisibility(View.GONE);
-                        showAppropriateFragment();
+                        if (isAdded()) {
+                            progressBar.setVisibility(View.GONE);
+                        }
                     }
                 }
         );
     }
 
-    private void showAppropriateFragment() {
-        if (imageUris.isEmpty()) {
-            // Resim yoksa NoImageFragment göster
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new NoImageFragment())
-                    .commit();
-        } else {
-            // Resim varsa PhotosFragment göster
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, this)
-                    .commit();
-        }
-    }
-
-
     private void setupObserver() {
         if (observer != null) return;
 
-        observer = new ContentObserver(new Handler(Looper.getMainLooper())) {
+        observer = new ContentObserver(
+                new Handler(Looper.getMainLooper())
+        ) {
             @Override
             public void onChange(boolean selfChange) {
                 debounceHandler.removeCallbacksAndMessages(null);
-                debounceHandler.postDelayed(() -> {
-                    // Resimleri tekrar yükle
-                    loadImages();
-                }, DEBOUNCE);
+                debounceHandler.postDelayed(
+                        PhotosFragment.this::loadImages,
+                        DEBOUNCE
+                );
             }
         };
 
