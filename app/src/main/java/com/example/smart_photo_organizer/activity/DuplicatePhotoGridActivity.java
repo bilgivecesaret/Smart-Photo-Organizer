@@ -72,7 +72,7 @@ public class DuplicatePhotoGridActivity extends AppCompatActivity {
         adapter = new DuplicateGridAdapter(images, count -> {
             updateUI(count);
         });
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         recyclerView.setAdapter(adapter);
 
         setupSelectAllListener();
