@@ -40,7 +40,7 @@ public class ImageGridFragment extends Fragment {
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
 
         images = getArguments() != null ? getArguments().getParcelableArrayList("images") : new ArrayList<>();
-        recyclerView.setAdapter(new ImageGridAdapter(requireContext(), images, this));
+        recyclerView.setAdapter(new ImageGridAdapter(requireContext(), images, getParentFragmentManager()));
 
 
         return view;
