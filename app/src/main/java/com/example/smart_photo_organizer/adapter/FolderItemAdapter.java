@@ -75,7 +75,7 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgPreview = itemView.findViewById(R.id.folderIcon);
+            imgPreview = itemView.findViewById(R.id.imgPreview);
             txtFolderName = itemView.findViewById(R.id.txtFolderName);
         }
     }
