@@ -109,4 +109,3 @@ public class ImagePHash {
         return Long.bitCount(hash1 ^ hash2);
     }
 }
-
