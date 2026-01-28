@@ -141,3 +141,4 @@ public class DuplicateGridAdapter extends RecyclerView.Adapter<DuplicateGridAdap
     }
 
 }
+
