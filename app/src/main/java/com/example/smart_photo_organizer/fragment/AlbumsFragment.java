@@ -89,6 +89,7 @@ public class AlbumsFragment extends Fragment {
         super.onResume();
         loadImageFolders();
     }
+
     private void loadImageFolders() {
 
         if (loading) return;
@@ -100,7 +101,7 @@ public class AlbumsFragment extends Fragment {
 
         ImageFetcher.loadAllImagesAsync(
                 requireContext(),
-                20, // batch size
+                50, // batch size (önemli değil, klasör için birikir)
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
