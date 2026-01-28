@@ -85,3 +85,4 @@ public class AutoAlbumActivity extends AppCompatActivity {
         adapter = new AutoAlbumAdapter(this, albums);
         recyclerView.setAdapter(adapter);
     }
+}
