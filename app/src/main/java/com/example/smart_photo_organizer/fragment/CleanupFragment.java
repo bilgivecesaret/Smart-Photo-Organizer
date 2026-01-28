@@ -14,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.activity.BlurredPhotoActivity;
 import com.example.smart_photo_organizer.activity.DuplicatePhotoAlbumActivity;
 import com.example.smart_photo_organizer.adapter.CleanUpAdapter;
 import java.util.ArrayList;
@@ -50,7 +49,11 @@ public class CleanupFragment extends Fragment {
                 startActivity(intent);
             }
             else if (item.equals("Blurred Photos")) {
-                Intent intent = new Intent(requireContext(), BlurredPhotoActivity.class);
+                Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.BlurredPhotoActivity.class);
+                startActivity(intent);
+            }
+            else if (item.equals("Create Auto Albums")) {
+                Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.AutoAlbumActivity.class);
                 startActivity(intent);
             }
         });
