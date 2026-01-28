@@ -39,4 +39,3 @@ public class FullscreenImageFragment extends Fragment {
         return photoView;
     }
 }
-
