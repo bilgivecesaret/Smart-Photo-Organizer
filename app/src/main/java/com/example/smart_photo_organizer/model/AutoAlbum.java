@@ -1,7 +1,6 @@
 package com.example.smart_photo_organizer.model;
 
-import android.net.Uri;
-import java.util.List; // *** BU SATIR EKSİKTİ, EKLEDİK ***
+import java.util.List;
 
 public class AutoAlbum {
     public String title;

@@ -62,11 +62,8 @@ public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHold
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // HATA VEREN SATIRI ŞUNUNLA DEĞİŞTİR:
-            // folderIcon = itemView.findViewById(R.id.folderIcon);
-            // YENİ HALİ:
-            folderIcon = itemView.findViewById(R.id.imgPreview);
 
+            folderIcon = itemView.findViewById(R.id.imgPreview);
             txtFolderName = itemView.findViewById(R.id.txtFolderName);
         }
     }
