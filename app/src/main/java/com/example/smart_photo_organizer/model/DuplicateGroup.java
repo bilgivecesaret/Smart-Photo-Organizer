@@ -13,4 +13,3 @@ public class DuplicateGroup {
         this.images = images;
     }
 }
-
