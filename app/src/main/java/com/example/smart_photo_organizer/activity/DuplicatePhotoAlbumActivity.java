@@ -39,8 +39,9 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
     private DuplicateAlbumAdapter adapter;
 
+    private static final int HAMMING_THRESHOLD = 2;
+
     private ActivityResultLauncher<Intent> gridLauncher;
-    private static final int HAMMING_THRESHOLD = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +65,6 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        // Grid'den silinen foto var mı diye kontrol et
                         Intent data = result.getData();
                         if (data != null && data.getBooleanExtra("photos_deleted", false)) {
                             startScan();
@@ -85,7 +85,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
         ImageFetcher.loadAllImagesAsync(
                 this,
-                20,
+                50,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
@@ -150,12 +150,14 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
             boolean added = false;
 
             for (List<HashItem> group : temp) {
+
                 boolean fitsGroup = true;
 
-                // tüm grup üyeleriyle karşılaştır
                 for (HashItem member : group) {
-                    int distance = ImagePHash.hammingDistance(item.hash, member.hash);
-                    if (distance > HAMMING_THRESHOLD) {
+                    if (ImagePHash.hammingDistance(
+                            item.hash,
+                            member.hash
+                    ) > HAMMING_THRESHOLD) {
                         fitsGroup = false;
                         break;
                     }
@@ -175,12 +177,15 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
             }
         }
 
-        groups.clear();
         for (List<HashItem> g : temp) {
             if (g.size() > 1) {
                 List<Uri> uris = new ArrayList<>();
                 for (HashItem h : g) uris.add(h.uri);
-                groups.add(new DuplicateGroup(g.get(0).hash, uris));
+
+                groups.add(new DuplicateGroup(
+                        g.get(0).hash,
+                        uris
+                ));
             }
         }
     }
