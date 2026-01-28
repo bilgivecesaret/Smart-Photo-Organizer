@@ -77,6 +77,7 @@ public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAd
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Yeni tasarım (item_duplicate_album.xml) ile eşleşen ID'ler
             cover = itemView.findViewById(R.id.imgCover);
             count = itemView.findViewById(R.id.txtCount);
         }

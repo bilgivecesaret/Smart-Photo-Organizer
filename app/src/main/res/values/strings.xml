@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Smart-Photo-Organizer</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="settings">Settings</string>
     <string name="cleanup">Cleanup</string>
@@ -10,4 +9,9 @@
     <string name="title_albums">ALBUMS</string>
     <string name="title_cleanup">CLEANUP</string>
     <string name="title_settings">SETTINGS</string>
+    <string name="duplicated_photos">Duplicated Photos</string>
+
+    <string name="auto_albums">Auto Albums</string>
+    <string name="create_auto_albums">Create Auto Albums</string>
+    <string name="auto_album_desc">Fotoğrafları tarih ve konuma göre otomatik gruplandır.</string>
 </resources>

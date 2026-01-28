@@ -1,0 +1,1 @@
+ninja: Entering directory `C:\Smart-Photo-Organizer_burakutku\openCV\.cxx\Debug\516f252b\armeabi-v7a'

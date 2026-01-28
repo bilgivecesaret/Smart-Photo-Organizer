@@ -2,14 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissions for Android 13 (API Level 33) and Above -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" android:minSdkVersion="34" />
-
-    <!-- Permissions for Android 12 (API Level 32) and Below -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -31,6 +29,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activity.DuplicatePhotoAlbumActivity"
             android:exported="false" />
@@ -42,6 +41,15 @@
         <activity
             android:name=".activity.BlurredPhotoActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".activity.AutoAlbumActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activity.AutoAlbumDetailActivity"
+            android:exported="false"
+            android:label="Albüm İçeriği" />
 
     </application>
 

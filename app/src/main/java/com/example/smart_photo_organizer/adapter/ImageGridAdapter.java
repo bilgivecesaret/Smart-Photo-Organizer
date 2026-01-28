@@ -1,5 +1,5 @@
 package com.example.smart_photo_organizer.adapter;
-
+import androidx.fragment.app.FragmentManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
+import com.example.smart_photo_organizer.activity.AutoAlbumDetailActivity;
 import com.example.smart_photo_organizer.fragment.FullscreenFragment;
 
 import java.util.ArrayList;
@@ -22,12 +23,12 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
 
     private final Context context;
     private final List<Uri> images;
-    private final Fragment fragment;
+    private final FragmentManager fragmentManager;
 
-    public ImageGridAdapter(Context context, List<Uri> images, Fragment fragment) {
+    public ImageGridAdapter(Context context, List<Uri> images, FragmentManager fragmentManager) {
         this.context = context;
         this.images = images;
-        this.fragment = fragment;
+        this.fragmentManager = fragmentManager;
     }
 
     @NonNull
@@ -50,17 +51,24 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
 
 
         holder.img.setOnClickListener(v -> {
+            // 1. Fragment'ı hazırla
             FullscreenFragment fullscreenFragment = new FullscreenFragment();
-
             Bundle b = new Bundle();
             b.putParcelableArrayList("images", new ArrayList<>(images));
             b.putInt("position", position);
             fullscreenFragment.setArguments(b);
 
-            fragment.getParentFragmentManager()
-                    .beginTransaction()
+            // 2. Kapsayıcıyı görünür yap (Geri atmayı engellemek için)
+            View container = ((AutoAlbumDetailActivity)context).findViewById(R.id.fragment_container);
+            if (container != null) {
+                container.setVisibility(View.VISIBLE);
+            }
+
+            // 3. Geçişi başlat
+            fragmentManager.beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                     .replace(R.id.fragment_container, fullscreenFragment)
-                    .addToBackStack(null)
+                    .addToBackStack("fullscreen") // Geri dönüş için isim verdik
                     .commit();
         });
     }

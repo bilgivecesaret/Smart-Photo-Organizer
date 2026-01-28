@@ -52,6 +52,10 @@ public class CleanupFragment extends Fragment {
                 Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.BlurredPhotoActivity.class);
                 startActivity(intent);
             }
+            else if (item.equals("Create Auto Albums")) {
+                Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.AutoAlbumActivity.class);
+                startActivity(intent);
+            }
         });
 
         recyclerView.setAdapter(adapter);

@@ -32,6 +32,7 @@ public class PhotosFragment extends Fragment {
     private ImageGridAdapter adapter;
     private ProgressBar progressBar;
 
+    // Fotoğrafların tutulduğu gerçek listenin adı: imageUris
     private final ArrayList<Uri> imageUris = new ArrayList<>();
 
     private ContentObserver observer;
@@ -56,10 +57,13 @@ public class PhotosFragment extends Fragment {
                 new GridLayoutManager(requireContext(), 3)
         );
 
+        // DÜZELTİLEN KISIM:
+        // 1. 'uriList' yerine 'imageUris' kullanıldı.
+        // 2. 3. parametre olarak doğrudan 'getParentFragmentManager()' gönderildi.
         adapter = new ImageGridAdapter(
                 requireContext(),
                 imageUris,
-                this
+                getParentFragmentManager()
         );
         recyclerView.setAdapter(adapter);
 
@@ -70,6 +74,8 @@ public class PhotosFragment extends Fragment {
 
     @SuppressLint("NotifyDataSetChanged")
     private void loadImages() {
+        if (!isAdded()) return; // Fragment bağlı değilse işlem yapma
+
         imageUris.clear();
         adapter.notifyDataSetChanged();
         progressBar.setVisibility(View.VISIBLE);
@@ -81,6 +87,7 @@ public class PhotosFragment extends Fragment {
 
                     @Override
                     public void onBatch(List<HashItem> batch) {
+                        if (!isAdded()) return;
                         int start = imageUris.size();
                         for (HashItem item : batch) {
                             imageUris.add(item.uri);
@@ -93,7 +100,9 @@ public class PhotosFragment extends Fragment {
 
                     @Override
                     public void onComplete() {
-                        progressBar.setVisibility(View.GONE);
+                        if (isAdded()) {
+                            progressBar.setVisibility(View.GONE);
+                        }
                     }
                 }
         );
