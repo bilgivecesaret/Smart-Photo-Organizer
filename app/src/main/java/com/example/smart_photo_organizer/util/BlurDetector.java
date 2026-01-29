@@ -15,7 +15,7 @@ public class BlurDetector {
 
     private static final String TAG = "BlurDetector";
 
-    private static final double BLUR_THRESHOLD = 200.0;
+    private static final double BLUR_THRESHOLD = 80.0;
 
     private static final int TARGET_SIZE = 1000;
 
@@ -39,6 +39,8 @@ public class BlurDetector {
 
             Utils.bitmapToMat(bitmap, matImage);
             Imgproc.cvtColor(matImage, matGray, Imgproc.COLOR_BGR2GRAY);
+
+            Imgproc.GaussianBlur(matGray, matGray, new org.opencv.core.Size(3, 3), 0);
 
             Imgproc.Laplacian(matGray, laplacianImage, CvType.CV_64F);
 
