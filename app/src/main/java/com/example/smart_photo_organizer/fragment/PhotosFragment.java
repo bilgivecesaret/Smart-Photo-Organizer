@@ -1,6 +1,5 @@
 package com.example.smart_photo_organizer.fragment;
 
-import android.annotation.SuppressLint;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
