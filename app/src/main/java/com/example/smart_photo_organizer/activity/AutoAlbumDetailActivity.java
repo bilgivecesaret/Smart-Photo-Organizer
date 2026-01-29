@@ -4,7 +4,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
+
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
@@ -18,7 +23,13 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_auto_album_detail);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.autoAlbumActivityDetail), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
+            return insets;
+        });
 
         String title = getIntent().getStringExtra("ALBUM_TITLE");
         ArrayList<HashItem> photos = getIntent().getParcelableArrayListExtra("ALBUM_PHOTOS");
@@ -35,8 +46,8 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
             }
         }
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerDuplicateAlbums);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        RecyclerView recyclerView = findViewById(R.id.recyclerSimilarAlbums);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         // PROGRESS BAR'I DURDURAN KOD EKLENDİ
         ProgressBar progressBar = findViewById(R.id.progressBar);
@@ -46,6 +57,16 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
 
         ImageGridAdapter adapter = new ImageGridAdapter(this, uriList, getSupportFragmentManager());
         recyclerView.setAdapter(adapter);
+    }
+
+    public void showFullscreenContainer() {
+        View container = findViewById(R.id.fragment_container);
+        if (container != null) {
+            container.setVisibility(View.VISIBLE);
+            container.bringToFront();
+            container.requestLayout();
+            container.invalidate();
+        }
     }
 
     @Override

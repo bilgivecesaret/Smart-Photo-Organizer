@@ -37,7 +37,7 @@ public class ImageGridFragment extends Fragment {
         recyclerView.setDrawingCacheEnabled(true);
         recyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
-        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 4));
 
         images = getArguments() != null ? getArguments().getParcelableArrayList("images") : new ArrayList<>();
         recyclerView.setAdapter(new ImageGridAdapter(requireContext(), images, getParentFragmentManager()));

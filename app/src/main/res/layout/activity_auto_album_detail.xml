@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/duplicatePhotoAlbum"
+    android:id="@+id/autoAlbumActivityDetail"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#E8E8E8">
@@ -27,7 +27,7 @@
         app:layout_constraintTop_toBottomOf="@id/txtTitle">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerDuplicateAlbums"
+            android:id="@+id/recyclerSimilarAlbums"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="8dp"

@@ -4,7 +4,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,19 +26,25 @@ import java.util.List;
 public class AutoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private ProgressBar progressBar; // İşlem sırasında kullanıcıya bilgi vermek için
+    private ProgressBar progressBar;
     private List<HashItem> allPhotos = new ArrayList<>();
     private AutoAlbumAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_auto_album);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.autoAlbumActivity), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
+            return insets;
+        });
 
         // Görünümleri bağla
         recyclerView = findViewById(R.id.rvAutoAlbums);
         // Eğer layout'ta progressBar varsa burayı kullanabilirsin, yoksa silebilirsin
-        progressBar = findViewById(R.id.progressBarBlur);
+        progressBar = findViewById(R.id.progressBarCreateAlbum);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -45,7 +56,7 @@ public class AutoAlbumActivity extends AppCompatActivity {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
 
         // ImageFetcher artık tarih ve konum verilerini de getiriyor
-        ImageFetcher.loadAllImagesAsync(this, 50, new ImageFetcher.ImageBatchCallback() {
+        ImageFetcher.loadAllImagesAsync(this, 20, new ImageFetcher.ImageBatchCallback() {
             @Override
             public void onBatch(List<HashItem> batch) {
                 // Gelen her 50'lik fotoğraf grubunu listeye ekle

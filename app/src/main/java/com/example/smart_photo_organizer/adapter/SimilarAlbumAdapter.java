@@ -12,15 +12,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.activity.DuplicatePhotoGridActivity;
+import com.example.smart_photo_organizer.activity.SimilarPhotoGridActivity;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAdapter.ViewHolder> {
+public class SimilarAlbumAdapter extends RecyclerView.Adapter<SimilarAlbumAdapter.ViewHolder> {
 
     Context context;
     List<DuplicateGroup> groups;
@@ -31,7 +30,7 @@ public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAd
         void openGrid(Intent intent, int position);
     }
 
-    public DuplicateAlbumAdapter(Context context, List<DuplicateGroup> groups, OnAlbumClick callback) {
+    public SimilarAlbumAdapter(Context context, List<DuplicateGroup> groups, OnAlbumClick callback) {
         this.context = context;
         this.groups = groups;
         this.callback = callback;
@@ -50,14 +49,14 @@ public class DuplicateAlbumAdapter extends RecyclerView.Adapter<DuplicateAlbumAd
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DuplicateGroup group = groups.get(position);
 
-        holder.count.setText(group.images.size() + " Duplicates");
+        holder.count.setText(group.images.size() + " Similar");
 
         Glide.with(context)
                 .load(group.images.get(0))
                 .into(holder.cover);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, DuplicatePhotoGridActivity.class);
+            Intent intent = new Intent(context, SimilarPhotoGridActivity.class);
             intent.putParcelableArrayListExtra(
                     "images",
                     new ArrayList<>(group.images)

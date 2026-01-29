@@ -24,17 +24,17 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.adapter.DuplicateGridAdapter;
+import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DuplicatePhotoGridActivity extends AppCompatActivity {
+public class SimilarPhotoGridActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private CheckBox selectAll;
     private Button delete, cancel;
-    private DuplicateGridAdapter adapter;
+    private SimilarGridAdapter adapter;
     private long lastDeletedSize = 0;
 
     private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
@@ -50,7 +50,7 @@ public class DuplicatePhotoGridActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_duplicate_grid);
+        setContentView(R.layout.activity_similar_grid);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.duplicatePhotoGrid), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
@@ -69,10 +69,10 @@ public class DuplicatePhotoGridActivity extends AppCompatActivity {
             finish();
             return;
         }
-        adapter = new DuplicateGridAdapter(images, count -> {
+        adapter = new SimilarGridAdapter(images, count -> {
             updateUI(count);
         });
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         recyclerView.setAdapter(adapter);
 
         setupSelectAllListener();

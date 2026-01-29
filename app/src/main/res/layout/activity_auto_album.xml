@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#F5F5F5"
-    tools:context=".activity.AutoAlbumActivity">
+    android:id="@+id/autoAlbumActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -32,4 +32,9 @@
         android:padding="8dp"
         tools:listitem="@layout/item_auto_album" />
 
+    <ProgressBar
+        android:id="@+id/progressBarCreateAlbum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
 </LinearLayout>

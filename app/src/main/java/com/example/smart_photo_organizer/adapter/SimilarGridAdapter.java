@@ -16,13 +16,13 @@ import com.example.smart_photo_organizer.R;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DuplicateGridAdapter extends RecyclerView.Adapter<DuplicateGridAdapter.ViewHolder> {
+public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.ViewHolder> {
 
     private final List<Uri> images;
     private final List<Uri> selectedImages = new ArrayList<>();
     private SelectionListener selectionListener;
 
-    public DuplicateGridAdapter(List<Uri> images, SelectionListener selectionListener) {
+    public SimilarGridAdapter(List<Uri> images, SelectionListener selectionListener) {
         this.images = images != null ? images : new ArrayList<>();
         this.selectionListener = selectionListener;
     }

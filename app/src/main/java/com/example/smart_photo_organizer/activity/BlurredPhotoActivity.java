@@ -26,7 +26,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.adapter.DuplicateGridAdapter;
+import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 import com.example.smart_photo_organizer.util.BlurDetector;
 
 import org.opencv.android.OpenCVLoader;
@@ -47,7 +47,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
     private CheckBox cbSelectAll;
     private Button btnDelete;
 
-    private DuplicateGridAdapter adapter;
+    private SimilarGridAdapter adapter;
     private final List<Uri> blurredUris = Collections.synchronizedList(new ArrayList<>());
     private final List<ScanItem> candidateImages = new ArrayList<>();
     private static class ScanItem {
@@ -100,7 +100,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         cbSelectAll = findViewById(R.id.cbSelectAll);
         btnDelete = findViewById(R.id.btnDelete);
 
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         btnDelete.setOnClickListener(v -> deleteSelectedPhotos());
 
@@ -179,7 +179,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 while (!executor.isTerminated()) {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -200,7 +200,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         topBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
 
-        adapter = new DuplicateGridAdapter(new ArrayList<>(blurredUris), this::updateUI);
+        adapter = new SimilarGridAdapter(new ArrayList<>(blurredUris), this::updateUI);
 
         recyclerView.setAdapter(adapter);
 

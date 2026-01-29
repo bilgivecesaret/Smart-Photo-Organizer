@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.adapter.DuplicateAlbumAdapter;
+import com.example.smart_photo_organizer.adapter.SimilarAlbumAdapter;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
 import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.ImageFetcher;
@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
+public class SimilarPhotoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
@@ -37,9 +37,9 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     private final List<HashItem> allImages = new ArrayList<>();
     private final List<DuplicateGroup> groups = new ArrayList<>();
 
-    private DuplicateAlbumAdapter adapter;
+    private SimilarAlbumAdapter adapter;
 
-    private static final int HAMMING_THRESHOLD = 2;
+    private static final int HAMMING_THRESHOLD = 1;
 
     private ActivityResultLauncher<Intent> gridLauncher;
 
@@ -47,14 +47,14 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_duplicate_albums);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.duplicatePhotoAlbum), (v, insets) -> {
+        setContentView(R.layout.activity_similar_albums);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.similarPhotoAlbum), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
             return insets;
         });
 
-        recyclerView = findViewById(R.id.recyclerDuplicateAlbums);
+        recyclerView = findViewById(R.id.recyclerSimilarAlbums);
         progressBar = findViewById(R.id.progressBar);
 
         recyclerView.setLayoutManager(
@@ -85,7 +85,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
         ImageFetcher.loadAllImagesAsync(
                 this,
-                50,
+                20,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
@@ -136,7 +136,7 @@ public class DuplicatePhotoAlbumActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 progressBar.setVisibility(View.GONE);
-                adapter = new DuplicateAlbumAdapter(this, groups,
+                adapter = new SimilarAlbumAdapter(this, groups,
                         (intent, pos) -> gridLauncher.launch(intent));
                 recyclerView.setAdapter(adapter);
             });

@@ -9,7 +9,7 @@
     <string name="title_albums">ALBUMS</string>
     <string name="title_cleanup">CLEANUP</string>
     <string name="title_settings">SETTINGS</string>
-    <string name="duplicated_photos">Duplicated Photos</string>
+    <string name="similar_photos">Similar Photos</string>
 
     <string name="auto_albums">Auto Albums</string>
     <string name="create_auto_albums">Create Auto Albums</string>

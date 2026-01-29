@@ -49,26 +49,30 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
                 .into(holder.img);
 
         holder.img.setOnClickListener(v -> {
-            // 1. Fragment'ı hazırla
+
+            if (context instanceof AutoAlbumDetailActivity) {
+                ((AutoAlbumDetailActivity) context).showFullscreenContainer();
+            }
+
             FullscreenFragment fullscreenFragment = new FullscreenFragment();
+
             Bundle b = new Bundle();
             b.putParcelableArrayList("images", new ArrayList<>(images));
             b.putInt("position", position);
             fullscreenFragment.setArguments(b);
 
-            // 2. Kapsayıcıyı görünür yap (Geri atmayı engellemek için)
-            View container = ((AutoAlbumDetailActivity)context).findViewById(R.id.fragment_container);
-            if (container != null) {
-                container.setVisibility(View.VISIBLE);
-            }
-
-            // 3. Geçişi başlat
             fragmentManager.beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .setCustomAnimations(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out,
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                    )
                     .replace(R.id.fragment_container, fullscreenFragment)
-                    .addToBackStack("fullscreen") // Geri dönüş için isim verdik
+                    .addToBackStack("fullscreen")
                     .commit();
         });
+
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

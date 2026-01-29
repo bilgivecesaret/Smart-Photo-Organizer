@@ -54,7 +54,7 @@ public class PhotosFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
 
         recyclerView.setLayoutManager(
-                new GridLayoutManager(requireContext(), 3)
+                new GridLayoutManager(requireContext(), 4)
         );
 
         // DÜZELTİLEN KISIM:
@@ -82,7 +82,7 @@ public class PhotosFragment extends Fragment {
 
         ImageFetcher.loadAllImagesAsync(
                 requireContext(),
-                40,
+                20,
                 new ImageFetcher.ImageBatchCallback() {
 
                     @Override
