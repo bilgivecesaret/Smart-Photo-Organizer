@@ -67,4 +67,6 @@
             android:layout_gravity="center"
             android:indeterminateTint="@color/black" />
     </FrameLayout>
+
 </LinearLayout>
+

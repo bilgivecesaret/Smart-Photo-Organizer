@@ -63,4 +63,6 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
         onBackPressed();
         return true;
     }
+
 }
+

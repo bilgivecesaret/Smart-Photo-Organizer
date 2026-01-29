@@ -19,6 +19,7 @@ public class HashItem implements Parcelable { // Parcelable eklendi
         this.timestamp = timestamp;
         this.latitude = latitude;
         this.longitude = longitude;
+
     }
 
     // Parcelable için gereken metodlar

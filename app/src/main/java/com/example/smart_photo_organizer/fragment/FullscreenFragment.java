@@ -70,4 +70,6 @@ public class FullscreenFragment extends Fragment {
             }
         }
     }
+
 }
+

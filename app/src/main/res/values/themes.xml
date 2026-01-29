@@ -10,4 +10,6 @@
     <style name="RoundedImageView">
         <item name="cornerSize">12dp</item>
     </style>
+
 </resources>
+

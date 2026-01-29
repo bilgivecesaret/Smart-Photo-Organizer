@@ -103,4 +103,5 @@ public class AutoAlbumCreator {
         }
         return dateStr + locationStr;
     }
+
 }

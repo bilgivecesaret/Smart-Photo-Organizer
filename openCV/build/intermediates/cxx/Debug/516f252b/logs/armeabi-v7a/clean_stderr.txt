@@ -1,0 +1,1 @@
+ninja: fatal: chdir to 'C:\Smart-Photo-Organizer_burakutku\openCV\.cxx\Debug\516f252b\armeabi-v7a' - No such file or directory

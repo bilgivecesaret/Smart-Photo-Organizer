@@ -10,4 +10,6 @@ public class AutoAlbum {
         this.title = title;
         this.photos = photos;
     }
+
 }
+
