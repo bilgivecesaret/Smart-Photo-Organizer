@@ -14,8 +14,8 @@ import org.opencv.imgproc.Imgproc;
 public class BlurDetector {
 
     private static final String TAG = "BlurDetector";
-
-    private static final double BLUR_THRESHOLD = 80.0;
+    
+    private static final double BLUR_THRESHOLD = 20.0;
 
     private static final int TARGET_SIZE = 1000;
 
@@ -30,7 +30,6 @@ public class BlurDetector {
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(imagePath, options);
 
-
             options.inSampleSize = calculateInSampleSize(options, TARGET_SIZE, TARGET_SIZE);
             options.inJustDecodeBounds = false;
 
@@ -39,8 +38,8 @@ public class BlurDetector {
 
             Utils.bitmapToMat(bitmap, matImage);
             Imgproc.cvtColor(matImage, matGray, Imgproc.COLOR_BGR2GRAY);
-
-            Imgproc.GaussianBlur(matGray, matGray, new org.opencv.core.Size(3, 3), 0);
+            
+            Imgproc.medianBlur(matGray, matGray, 3);
 
             Imgproc.Laplacian(matGray, laplacianImage, CvType.CV_64F);
 
@@ -49,14 +48,16 @@ public class BlurDetector {
             Core.meanStdDev(laplacianImage, mean, stdDev);
 
             double variance = Math.pow(stdDev.get(0, 0)[0], 2);
+            
+            String fileName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
+            Log.d(TAG, "Photo analysis -> File: " + fileName + " | Point: " + variance);
 
             return variance < BLUR_THRESHOLD;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error: " + imagePath, e);
+            Log.e(TAG, "Analysis error: " + imagePath, e);
             return false;
         } finally {
-
             if (bitmap != null && !bitmap.isRecycled()) {
                 bitmap.recycle();
             }
@@ -65,6 +66,7 @@ public class BlurDetector {
             laplacianImage.release();
         }
     }
+
     private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         final int height = options.outHeight;
         final int width = options.outWidth;
@@ -73,7 +75,6 @@ public class BlurDetector {
         if (height > reqHeight || width > reqWidth) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
-
             while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
                 inSampleSize *= 2;
             }
