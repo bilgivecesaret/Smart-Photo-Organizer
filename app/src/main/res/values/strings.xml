@@ -14,6 +14,7 @@
     <string name="auto_albums">Auto Albums</string>
     <string name="create_auto_albums">Create Auto Albums</string>
     <string name="auto_album_desc">Fotoğrafları tarih ve konuma göre otomatik gruplandır.</string>
+    <string name="splash_screen">Splash Screen</string>
 
 </resources>
 

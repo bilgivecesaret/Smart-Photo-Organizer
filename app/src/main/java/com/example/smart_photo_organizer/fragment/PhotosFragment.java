@@ -72,13 +72,11 @@ public class PhotosFragment extends Fragment {
         return view;
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private void loadImages() {
-        if (!isAdded()) return; // Fragment bağlı değilse işlem yapma
+        if (!isAdded()) return;
 
         imageUris.clear();
         adapter.notifyDataSetChanged();
-        progressBar.setVisibility(View.VISIBLE);
 
         ImageFetcher.loadAllImagesAsync(
                 requireContext(),
@@ -102,11 +100,29 @@ public class PhotosFragment extends Fragment {
                     public void onComplete() {
                         if (isAdded()) {
                             progressBar.setVisibility(View.GONE);
+                            showAppropriateFragment();
                         }
                     }
                 }
         );
     }
+
+    private void showAppropriateFragment() {
+        if (imageUris.isEmpty()) {
+            // Resim yoksa NoImageFragment göster
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new NoImageFragment())
+                    .commit();
+        } else {
+            // Resim varsa PhotosFragment göster
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, this)
+                    .commit();
+        }
+    }
+
 
     private void setupObserver() {
         if (observer != null) return;
@@ -117,10 +133,10 @@ public class PhotosFragment extends Fragment {
             @Override
             public void onChange(boolean selfChange) {
                 debounceHandler.removeCallbacksAndMessages(null);
-                debounceHandler.postDelayed(
-                        PhotosFragment.this::loadImages,
-                        DEBOUNCE
-                );
+                debounceHandler.postDelayed(() -> {
+                    // Resimleri tekrar yükle
+                    loadImages();
+                }, DEBOUNCE);
             }
         };
 

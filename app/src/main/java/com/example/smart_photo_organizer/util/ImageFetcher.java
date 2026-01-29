@@ -9,8 +9,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 
+import androidx.annotation.NonNull;
+
 import com.example.smart_photo_organizer.model.HashItem;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,16 +39,19 @@ public class ImageFetcher {
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
             // ===== IMAGES (Galeri Fotoğrafları) =====
-            Uri imagesUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+            Uri imagesUri;
 
-            String[] projection = {
-                    MediaStore.Images.Media._ID,
-                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-                    MediaStore.MediaColumns.RELATIVE_PATH,
-                    MediaStore.Images.Media.DATE_TAKEN, // Tarih verisi
-                    MediaStore.Images.Media.LATITUDE,   // Konum verisi
-                    MediaStore.Images.Media.LONGITUDE   // Konum verisi
-            };
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                imagesUri = MediaStore.Images.Media.getContentUri(
+                        MediaStore.VOLUME_EXTERNAL
+                );
+            } else {
+                imagesUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            }
+
+
+            String[] projection = getProjection();
+
 
             try (Cursor cursor = context.getContentResolver().query(
                     imagesUri,
@@ -58,7 +64,12 @@ public class ImageFetcher {
                 if (cursor != null) {
                     int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                     int bucketCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
-                    int pathCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH);
+                    int pathCol = cursor.getColumnIndexOrThrow(
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                                    ? MediaStore.MediaColumns.RELATIVE_PATH
+                                    : MediaStore.Images.Media.DATA
+                    );
+
                     int dateCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                     int latCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.LATITUDE);
                     int lonCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.LONGITUDE);
@@ -74,10 +85,15 @@ public class ImageFetcher {
 
                         if (!addedUris.add(uri.toString())) continue;
 
+                        String folder =
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                                        ? cursor.getString(pathCol)
+                                        : new File(cursor.getString(pathCol)).getParent();
+
                         batch.add(new HashItem(
                                 0L,
                                 uri,
-                                resolveFolderName(cursor.getString(bucketCol), cursor.getString(pathCol)),
+                                resolveFolderName(cursor.getString(bucketCol), folder),
                                 dateTaken,
                                 lat,
                                 lon
@@ -156,6 +172,31 @@ public class ImageFetcher {
             }
             mainHandler.post(callback::onComplete);
         });
+    }
+
+    private static String[] getProjection() {
+        String[] projection;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            projection = new String[]{
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    MediaStore.Images.Media.DATE_TAKEN,
+                    MediaStore.Images.Media.LATITUDE,
+                    MediaStore.Images.Media.LONGITUDE
+            };
+        } else {
+            projection = new String[]{
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                    MediaStore.Images.Media.DATA, // 👈 API 27 için
+                    MediaStore.Images.Media.DATE_TAKEN,
+                    MediaStore.Images.Media.LATITUDE,
+                    MediaStore.Images.Media.LONGITUDE
+            };
+        }
+        return projection;
     }
 
     private static String resolveFolderName(String bucket, String relativePath) {
