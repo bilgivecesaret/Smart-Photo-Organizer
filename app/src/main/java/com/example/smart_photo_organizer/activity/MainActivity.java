@@ -2,6 +2,7 @@ package com.example.smart_photo_organizer.activity;
 
 import static com.example.smart_photo_organizer.permission.PermissionHelper.openAppSettings;
 
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import com.example.smart_photo_organizer.fragment.PhotosFragment;
 import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
+import com.example.smart_photo_organizer.util.AutoCleanup;
 import com.example.smart_photo_organizer.util.ImageFetcher;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -90,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         PermissionHelper.checkStoragePermissions(this,this);
         setupNavigation();
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+
+        boolean autoCleanup = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
+
+        if (autoCleanup) {
+            AutoCleanup.runAutoCleanup(this);
+        }
     }
     private void setupNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {

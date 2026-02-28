@@ -20,11 +20,11 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 
 public class SettingsFragment extends Fragment {
 
-    private MaterialSwitch permissionSwitch;
-    private SharedPreferences prefs;
-
-    private static final String PREFS_NAME = "app_prefs";
+    private MaterialSwitch permissionSwitch, autoCleanupForSimilarImagesSwitch, autoCleanupForBlurredImagesSwitch, autoAlbumSwitch;
+    public static SharedPreferences prefs;
+    public static final String PREFS_NAME = "app_prefs";
     private static final String KEY_PERMISSION_SWITCH = "permission_switch";
+    public static final String KEY_AUTO_CLEANUP_SIMILAR = "auto_cleanup_similar";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -33,11 +33,13 @@ public class SettingsFragment extends Fragment {
 
         prefs = getActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         permissionSwitch = root.findViewById(R.id.permissionSwitch);
+        autoCleanupForSimilarImagesSwitch = root.findViewById(R.id.autoCleanupForSimilarImagesSwitch);
 
-        // Switch durumunu runtime izinleriyle senkronize et
+        boolean isAutoCleanupActive = prefs.getBoolean(KEY_AUTO_CLEANUP_SIMILAR, false);
+        autoCleanupForSimilarImagesSwitch.setChecked(isAutoCleanupActive);
+
         syncSwitchWithPermissions();
 
-        // Switch listener
         permissionSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -58,10 +60,16 @@ public class SettingsFragment extends Fragment {
             }
         });
 
+        autoCleanupForSimilarImagesSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                prefs.edit().putBoolean(KEY_AUTO_CLEANUP_SIMILAR, isChecked).apply();
+            }
+        });
+
         return root;
     }
 
-    // Switch'i gerçek izin durumuna göre güncelle
     private void syncSwitchWithPermissions() {
         boolean granted = true;
         for (String perm : PermissionHelper.getStoragePermissions()) {
@@ -77,7 +85,6 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Kullanıcı ayarlardan izinleri değiştirmiş olabilir, switch'i güncelle
         syncSwitchWithPermissions();
     }
 }

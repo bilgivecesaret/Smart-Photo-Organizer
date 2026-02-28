@@ -9,7 +9,7 @@ import java.io.InputStream;
 
 public class ImagePHash {
 
-    private static final int SIZE = 16;
+    private static final int SIZE = 32;
     private static final int SMALL_SIZE = 8;
     private static final double[][] COS = precomputeCos();
 
@@ -17,12 +17,8 @@ public class ImagePHash {
         Bitmap bitmap = null;
         InputStream is = null;
         try {
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = 8;
-            opts.inPreferredConfig = Bitmap.Config.RGB_565;
-
             is = context.getContentResolver().openInputStream(uri);
-            bitmap = BitmapFactory.decodeStream(is, null, opts);
+            bitmap = BitmapFactory.decodeStream(is);
             if (bitmap == null) return 0L;
             bitmap = Bitmap.createScaledBitmap(bitmap, SIZE, SIZE, false);
 

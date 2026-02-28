@@ -12,4 +12,8 @@ public class DuplicateGroup {
         this.hash = hash;
         this.images = images;
     }
+
+    public List<Uri> getUris() {
+        return images;
+    }
 }

@@ -33,14 +33,10 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
-
     private final List<HashItem> allImages = new ArrayList<>();
     private final List<DuplicateGroup> groups = new ArrayList<>();
-
     private SimilarAlbumAdapter adapter;
-
-    private static final int HAMMING_THRESHOLD = 1;
-
+    private static final int HAMMING_THRESHOLD = 8;
     private ActivityResultLauncher<Intent> gridLauncher;
 
     @Override
@@ -85,14 +81,12 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
 
         ImageFetcher.loadAllImagesAsync(
                 this,
-                20,
+                50,
                 new ImageFetcher.ImageBatchCallback() {
-
                     @Override
                     public void onBatch(List<HashItem> batch) {
                         allImages.addAll(batch);
                     }
-
                     @Override
                     public void onComplete() {
                         calculateHashes();
@@ -135,6 +129,20 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
             buildGroups();
 
             runOnUiThread(() -> {
+                if (groups.isEmpty()) {
+
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                            .setTitle("No Similar Photos")
+                            .setMessage("No similar photos were found on your device.")
+                            .setPositiveButton("OK", (dialog, which) -> {
+                                dialog.dismiss();
+                                finish();
+                            })
+                            .setCancelable(false)
+                            .show();
+
+                    return;
+                }
                 progressBar.setVisibility(View.GONE);
                 adapter = new SimilarAlbumAdapter(this, groups,
                         (intent, pos) -> gridLauncher.launch(intent));
@@ -189,5 +197,4 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
             }
         }
     }
-
 }
