@@ -5,11 +5,9 @@ import android.net.Uri;
 import java.util.List;
 
 public class DuplicateGroup {
-    public long hash;
     public List<Uri> images;
 
-    public DuplicateGroup(long hash, List<Uri> images) {
-        this.hash = hash;
+    public DuplicateGroup(List<Uri> images) {
         this.images = images;
     }
 

@@ -20,12 +20,9 @@ import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.SimilarAlbumAdapter;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
 import com.example.smart_photo_organizer.model.HashItem;
-import com.example.smart_photo_organizer.util.ImageFeatureExtractor;
+import com.example.smart_photo_organizer.util.AIEmbeddingUtil;
 import com.example.smart_photo_organizer.util.ImageFetcher;
-import com.example.smart_photo_organizer.util.OpenCvMSEUtil;
 import com.example.smart_photo_organizer.util.UnionFind;
-
-import org.opencv.android.OpenCVLoader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,15 +37,12 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
     private final List<HashItem> allImages = new ArrayList<>();
     private final List<DuplicateGroup> groups = new ArrayList<>();
     private SimilarAlbumAdapter adapter;
-    private static final double FAST_THRESHOLD = 3000; // L2 ön filtre
-    private static final double MSE_THRESHOLD = 2000;   // Kesin benzerlik
+    private static final double AI_THRESHOLD = 0.80;
     private ActivityResultLauncher<Intent> gridLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        OpenCVLoader.initDebug();
-
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_similar_albums);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.similarPhotoAlbum), (v, insets) -> {
@@ -101,49 +95,37 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
                 }
         );
     }
-
     private void buildGroups() {
 
         Executors.newSingleThreadExecutor().execute(() -> {
 
             int n = allImages.size();
+            AIEmbeddingUtil ai = new AIEmbeddingUtil(this);
 
-            float[][] features = new float[n][];
+            float[][] embeddings = new float[n][];
 
             for (int i = 0; i < n; i++) {
-                features[i] = ImageFeatureExtractor.extractFeature(
-                        this,
-                        allImages.get(i).uri
-                );
+                embeddings[i] = ai.getEmbedding(this, allImages.get(i).uri);
             }
 
             UnionFind uf = new UnionFind(n);
 
             for (int i = 0; i < n; i++) {
-
                 for (int j = i + 1; j < n; j++) {
-
-                    double fastDist = ImageFeatureExtractor.l2Distance(
-                            features[i],
-                            features[j]
-                    );
-
-                    if (fastDist < FAST_THRESHOLD) {
-
-                        double mse = OpenCvMSEUtil.calculateMSE(
-                                this,
-                                allImages.get(i).uri,
-                                allImages.get(j).uri
-                        );
-
-                        if (mse < MSE_THRESHOLD) {
-                            uf.union(i, j);
-                        }
+                    if (embeddings[i] == null || embeddings[j] == null) {
+                        continue;
+                    }
+                    double similarity =
+                            AIEmbeddingUtil.cosineSimilarity(
+                                    embeddings[i],
+                                    embeddings[j]
+                            );
+                    if (similarity > AI_THRESHOLD) {
+                        uf.union(i, j);
                     }
                 }
             }
 
-            // Cluster oluştur
             Map<Integer, List<Uri>> map = new HashMap<>();
 
             for (int i = 0; i < n; i++) {
@@ -153,12 +135,25 @@ public class SimilarPhotoAlbumActivity extends AppCompatActivity {
             }
 
             for (List<Uri> cluster : map.values()) {
-                if (cluster.size() > 1) {
-                    groups.add(new DuplicateGroup(0L, cluster));
-                }
+                if (cluster.size() > 1)
+                    groups.add(new DuplicateGroup(cluster));
             }
 
             runOnUiThread(() -> {
+                if (groups.isEmpty()) {
+
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                            .setTitle("No Similar Photos")
+                            .setMessage("No similar photos were found on your device.")
+                            .setPositiveButton("OK", (dialog, which) -> {
+                                dialog.dismiss();
+                                finish();
+                            })
+                            .setCancelable(false)
+                            .show();
+
+                    return;
+                }
                 progressBar.setVisibility(View.GONE);
                 adapter = new SimilarAlbumAdapter(
                         this,

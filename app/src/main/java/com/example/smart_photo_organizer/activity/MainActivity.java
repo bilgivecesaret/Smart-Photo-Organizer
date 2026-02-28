@@ -4,20 +4,21 @@ import static com.example.smart_photo_organizer.permission.PermissionHelper.open
 
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.fragment.AlbumsFragment;
@@ -25,14 +26,10 @@ import com.example.smart_photo_organizer.fragment.CleanupFragment;
 import com.example.smart_photo_organizer.fragment.NoImageFragment;
 import com.example.smart_photo_organizer.fragment.PhotosFragment;
 import com.example.smart_photo_organizer.fragment.SettingsFragment;
-import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
 import com.example.smart_photo_organizer.util.AutoCleanup;
-import com.example.smart_photo_organizer.util.ImageFetcher;
+import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
@@ -98,7 +95,17 @@ public class MainActivity extends AppCompatActivity {
         boolean autoCleanup = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
 
         if (autoCleanup) {
-            AutoCleanup.runAutoCleanup(this);
+            new AlertDialog.Builder(this)
+                    .setTitle("Auto Cleanup for Similar Photos")
+                    .setMessage("Similar photos will be deleted. Do you want to continue?")
+                    .setPositiveButton("Continue", (d, w) -> {
+                        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
+                                .build();
+                        WorkManager.getInstance(this).enqueue(request);
+                        Toast.makeText(this, "Auto cleanup started in background", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         }
     }
     private void setupNavigation() {
@@ -135,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Permission Denied. Please allow in Settings.", Toast.LENGTH_SHORT).show();
                 openAppSettings(this);
+                AutoCleanup.runAutoCleanupBackground(this);
             }
         }
     }

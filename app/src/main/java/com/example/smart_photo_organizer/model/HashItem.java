@@ -4,16 +4,16 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class HashItem implements Parcelable { // Parcelable eklendi
-    public long hash;
+public class HashItem implements Parcelable {
+    public float[] embedding;
     public Uri uri;
     public String bucketName;
     public long timestamp;
     public double latitude;
     public double longitude;
 
-    public HashItem(long hash, Uri uri, String bucketName, long timestamp, double latitude, double longitude) {
-        this.hash = hash;
+    public HashItem(float[] embedding, Uri uri, String bucketName, long timestamp, double latitude, double longitude) {
+        this.embedding = embedding;
         this.uri = uri;
         this.bucketName = bucketName;
         this.timestamp = timestamp;
@@ -24,7 +24,7 @@ public class HashItem implements Parcelable { // Parcelable eklendi
 
     // Parcelable için gereken metodlar
     protected HashItem(Parcel in) {
-        hash = in.readLong();
+        embedding = in.createFloatArray();
         uri = in.readParcelable(Uri.class.getClassLoader());
         bucketName = in.readString();
         timestamp = in.readLong();
@@ -49,7 +49,7 @@ public class HashItem implements Parcelable { // Parcelable eklendi
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(hash);
+        dest.writeFloatArray(embedding);
         dest.writeParcelable(uri, flags);
         dest.writeString(bucketName);
         dest.writeLong(timestamp);

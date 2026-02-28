@@ -1,190 +1,121 @@
 package com.example.smart_photo_organizer.util;
 
-import android.app.Activity;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
-
-import com.example.smart_photo_organizer.model.DuplicateGroup;
-import com.example.smart_photo_organizer.model.HashItem;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
 
 public class AutoCleanup {
 
-    private static final int HAMMING_THRESHOLD = 8;
-    public static void runAutoCleanup(
-            Activity activity
-    ) {
+    private static final String TAG = "AutoCleanup";
+    public static void runAutoCleanupBackground(Context context) {
+        try {
+            Log.d(TAG, "Auto cleanup started...");
 
-        List<HashItem> allImages = new ArrayList<>();
+            List<Uri> allPhotos = getAllPhotoUris(context);
+            List<List<Uri>> similarGroups = findSimilarGroups(context, allPhotos);
 
-        ImageFetcher.loadAllImagesAsync(
-                activity,
-                50,
-                new ImageFetcher.ImageBatchCallback() {
+            for (List<Uri> group : similarGroups) {
+                deletePhotos(context, group);
+            }
 
-                    @Override
-                    public void onBatch(List<HashItem> batch) {
-                        allImages.addAll(batch);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        processCleanup(activity, allImages);
-                    }
-                }
-        );
+            Log.d(TAG, "Auto cleanup finished. Deleted similar photos.");
+        } catch (Exception e) {
+            Log.e(TAG, "Auto cleanup failed", e);
+        }
     }
 
-    private static void processCleanup(
-            Activity activity,
-            List<HashItem> allImages
-    ) {
+    /**
+     * Tüm cihazdaki fotoğraf URI'lerini döndürür
+     */
+    private static List<Uri> getAllPhotoUris(Context context) {
+        List<Uri> photoUris = new ArrayList<>();
 
-        ExecutorService executor =
-                Executors.newFixedThreadPool(
-                        Runtime.getRuntime().availableProcessors()
-                );
+        ContentResolver resolver = context.getContentResolver();
+        String[] projection = { MediaStore.Images.Media._ID };
+        Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
 
-        for (HashItem item : allImages) {
-            executor.execute(() -> {
-                if (item.hash == 0L) {
-                    item.hash = ImagePHash.calculateHash(
-                            activity,
-                            item.uri
-                    );
+        try (android.database.Cursor cursor = resolver.query(collection, projection,
+                null, null, null)) {
+
+            if (cursor != null) {
+                int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(idColumn);
+                    Uri uri = Uri.withAppendedPath(collection, String.valueOf(id));
+                    photoUris.add(uri);
                 }
-            });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching photos", e);
         }
 
-        executor.shutdown();
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            while (!executor.isTerminated()) {}
-
-            List<DuplicateGroup> groups =
-                    buildGroups(allImages);
-
-            deleteDuplicates(activity, groups);
-        });
+        return photoUris;
     }
+    private static List<List<Uri>> findSimilarGroups(Context context, List<Uri> photos) {
+        List<List<Uri>> groups = new ArrayList<>();
+        if (photos.isEmpty()) return groups;
 
-    private static List<DuplicateGroup> buildGroups(
-            List<HashItem> allImages
-    ) {
+        AIEmbeddingUtil ai = new AIEmbeddingUtil(context);
+        int n = photos.size();
+        float[][] embeddings = new float[n][];
 
-        List<List<HashItem>> temp = new ArrayList<>();
-        List<DuplicateGroup> result = new ArrayList<>();
+        // Embeddingleri al
+        for (int i = 0; i < n; i++) {
+            embeddings[i] = ai.getEmbedding(context, photos.get(i));
+        }
 
-        for (HashItem item : allImages) {
+        // Union-Find kullanarak benzer fotoğrafları grupla
+        UnionFind uf = new UnionFind(n);
+        final double THRESHOLD = 0.80; // AI benzerlik eşik değeri
 
-            boolean added = false;
-
-            for (List<HashItem> group : temp) {
-
-                boolean fits = true;
-
-                for (HashItem member : group) {
-                    if (ImagePHash.hammingDistance(
-                            item.hash,
-                            member.hash
-                    ) > HAMMING_THRESHOLD) {
-                        fits = false;
-                        break;
-                    }
+        for (int i = 0; i < n; i++) {
+            if (embeddings[i] == null) continue;
+            for (int j = i + 1; j < n; j++) {
+                if (embeddings[j] == null) continue;
+                double similarity = AIEmbeddingUtil.cosineSimilarity(embeddings[i], embeddings[j]);
+                if (similarity > THRESHOLD) {
+                    uf.union(i, j);
                 }
-
-                if (fits) {
-                    group.add(item);
-                    added = true;
-                    break;
-                }
-            }
-
-            if (!added) {
-                List<HashItem> newGroup =
-                        new ArrayList<>();
-                newGroup.add(item);
-                temp.add(newGroup);
             }
         }
 
-        for (List<HashItem> g : temp) {
-            if (g.size() > 1) {
+        // Grupları oluştur
+        Map<Integer, List<Uri>> map = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            int root = uf.find(i);
+            map.putIfAbsent(root, new ArrayList<>());
+            map.get(root).add(photos.get(i));
+        }
 
-                List<Uri> uris = new ArrayList<>();
-                for (HashItem h : g)
-                    uris.add(h.uri);
-
-                result.add(
-                        new DuplicateGroup(
-                                g.get(0).hash,
-                                uris
-                        )
-                );
+        // 1’den fazla fotoğrafı olan grupları ekle
+        for (List<Uri> cluster : map.values()) {
+            if (cluster.size() > 1) {
+                groups.add(cluster);
             }
         }
 
-        return result;
+        return groups;
     }
-
-    private static void deleteDuplicates(
-            Activity activity,
-            List<DuplicateGroup> groups
-    ) {
-
-        List<Uri> toDelete = new ArrayList<>();
-
-        for (DuplicateGroup group : groups) {
-
-            List<Uri> uris = group.getUris();
-
-            for (int i = 1; i < uris.size(); i++) {
-                toDelete.add(uris.get(i));
-            }
-        }
-
-        if (toDelete.isEmpty()) return;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-
+    private static void deletePhotos(Context context, List<Uri> photos) {
+        ContentResolver resolver = context.getContentResolver();
+        for (Uri uri : photos) {
             try {
-
-                PendingIntent pendingIntent =
-                        MediaStore.createDeleteRequest(
-                                activity.getContentResolver(),
-                                toDelete
-                        );
-
-                activity.startIntentSenderForResult(
-                        pendingIntent.getIntentSender(),
-                        9999,
-                        null,
-                        0,
-                        0,
-                        0
-                );
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        } else {
-
-            // Android 9 ve altı
-            ContentResolver resolver =
-                    activity.getContentResolver();
-
-            for (Uri uri : toDelete) {
-                try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    resolver.delete(uri, null);
+                } else {
                     resolver.delete(uri, null, null);
-                } catch (Exception ignored) {}
+                }
+                Log.d(TAG, "Deleted photo: " + uri.toString());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to delete photo: " + uri, e);
             }
         }
     }

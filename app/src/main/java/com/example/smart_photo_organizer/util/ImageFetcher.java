@@ -91,7 +91,7 @@ public class ImageFetcher {
                                         : new File(cursor.getString(pathCol)).getParent();
 
                         batch.add(new HashItem(
-                                0L,
+                                null,
                                 uri,
                                 resolveFolderName(cursor.getString(bucketCol), folder),
                                 dateTaken,
@@ -149,7 +149,7 @@ public class ImageFetcher {
                             if (!addedUris.add(uri.toString())) continue;
 
                             batch.add(new HashItem(
-                                    0L,
+                                    null,
                                     uri,
                                     resolveFolderName("Download", cursor.getString(pathCol)),
                                     dateAdded,
