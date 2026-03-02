@@ -2,16 +2,26 @@ package com.example.smart_photo_organizer.activity;
 
 import static com.example.smart_photo_organizer.permission.PermissionHelper.openAppSettings;
 
+import android.Manifest;
+import android.app.PendingIntent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -31,10 +41,15 @@ import com.example.smart_photo_organizer.util.AutoCleanup;
 import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
     private long backPressedTime = 0; // Son back tuşu zamanı
     private static final int BACK_PRESS_INTERVAL = 2000; // 2 saniye
+    boolean autoCleanup;
+    private ActivityResultLauncher<IntentSenderRequest> deleteLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +61,18 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
             return insets;
         });
+
+        deleteLauncher =
+                registerForActivityResult(
+                        new ActivityResultContracts.StartIntentSenderForResult(),
+                        result -> {
+                            if (result.getResultCode() == RESULT_OK) {
+                                Toast.makeText(this,
+                                        "Similar photos deleted",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                            Log.d("AUTO_DEBUG", "Delete result code: " + result.getResultCode());
+                        });
 
         // BACK TUŞU CALLBACK (Sadece belirli fragmentlerde uygulamayı kapatır)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -92,20 +119,25 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
 
-        boolean autoCleanup = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
+        autoCleanup = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
 
-        if (autoCleanup) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Auto Cleanup for Similar Photos")
-                    .setMessage("Similar photos will be deleted. Do you want to continue?")
-                    .setPositiveButton("Continue", (d, w) -> {
-                        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
-                                .build();
-                        WorkManager.getInstance(this).enqueue(request);
-                        Toast.makeText(this, "Auto cleanup started in background", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
+        if (autoCleanup && hasStoragePermission()) {
+            Log.d("AUTO_DEBUG", "Permission OK, starting cleanup");
+            startAutoCleanup();
+        }
+    }
+
+    private boolean hasStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_IMAGES
+            ) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            return ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED;
         }
     }
     private void setupNavigation() {
@@ -134,15 +166,79 @@ public class MainActivity extends AppCompatActivity {
         });
         bottomNavigationView.setSelectedItemId(R.id.photos);
     }
+    private void startAutoCleanup() {
+
+        OneTimeWorkRequest request =
+                new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
+                        .build();
+
+        WorkManager.getInstance(this).enqueue(request);
+
+        WorkManager.getInstance(this)
+                .getWorkInfoByIdLiveData(request.getId())
+                .observe(this, workInfo -> {
+                    Log.d("AUTO_DEBUG", "Observer triggered");
+                    if (workInfo != null
+                            && workInfo.getState().isFinished()) {
+
+                        String uriString =
+                                workInfo.getOutputData()
+                                        .getString(AutoCleanupWorker.KEY_URIS);
+
+                        if (uriString == null || uriString.isEmpty())
+                            return;
+
+                        List<Uri> uriList = new ArrayList<>();
+
+                        for (String s : uriString.split(",")) {
+                            if (!s.isEmpty())
+                                uriList.add(Uri.parse(s));
+                        }
+
+                        Log.d("AUTO_DEBUG", "Launching delete request with size: " + uriList.size());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            try {
+                                PendingIntent pi =
+                                        MediaStore.createDeleteRequest(
+                                                getContentResolver(),
+                                                uriList);
+
+                                IntentSenderRequest request1 =
+                                        new IntentSenderRequest.Builder(
+                                                pi.getIntentSender())
+                                                .build();
+
+                                deleteLauncher.launch(request1);
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+
+                            for (Uri uri : uriList) {
+                                getContentResolver()
+                                        .delete(uri, null, null);
+                            }
+
+                            Toast.makeText(this,
+                                    "Similar photos deleted",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         if (requestCode == 1001) {
             if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission Denied. Please allow in Settings.", Toast.LENGTH_SHORT).show();
+               Toast.makeText(this, "Permission Denied. Please allow in Settings.",
+                        Toast.LENGTH_SHORT).show();
                 openAppSettings(this);
-                AutoCleanup.runAutoCleanupBackground(this);
             }
         }
     }

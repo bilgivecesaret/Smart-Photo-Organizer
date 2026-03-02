@@ -27,13 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PhotosFragment extends Fragment {
-
     private ImageGridAdapter adapter;
     private ProgressBar progressBar;
-
-    // Fotoğrafların tutulduğu gerçek listenin adı: imageUris
     private final ArrayList<Uri> imageUris = new ArrayList<>();
-
     private ContentObserver observer;
     private final Handler debounceHandler = new Handler(Looper.getMainLooper());
     private static final long DEBOUNCE = 600;
@@ -56,9 +52,6 @@ public class PhotosFragment extends Fragment {
                 new GridLayoutManager(requireContext(), 4)
         );
 
-        // DÜZELTİLEN KISIM:
-        // 1. 'uriList' yerine 'imageUris' kullanıldı.
-        // 2. 3. parametre olarak doğrudan 'getParentFragmentManager()' gönderildi.
         adapter = new ImageGridAdapter(
                 requireContext(),
                 imageUris,
@@ -108,13 +101,11 @@ public class PhotosFragment extends Fragment {
 
     private void showAppropriateFragment() {
         if (imageUris.isEmpty()) {
-            // Resim yoksa NoImageFragment göster
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new NoImageFragment())
                     .commit();
         } else {
-            // Resim varsa PhotosFragment göster
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, this)
@@ -132,10 +123,7 @@ public class PhotosFragment extends Fragment {
             @Override
             public void onChange(boolean selfChange) {
                 debounceHandler.removeCallbacksAndMessages(null);
-                debounceHandler.postDelayed(() -> {
-                    // Resimleri tekrar yükle
-                    loadImages();
-                }, DEBOUNCE);
+                debounceHandler.postDelayed(() -> loadImages(), DEBOUNCE);
             }
         };
 
