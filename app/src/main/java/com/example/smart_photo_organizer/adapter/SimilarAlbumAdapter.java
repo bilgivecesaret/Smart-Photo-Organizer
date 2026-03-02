@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.activity.SimilarPhotoGridActivity;
 import com.example.smart_photo_organizer.model.DuplicateGroup;
@@ -53,6 +54,7 @@ public class SimilarAlbumAdapter extends RecyclerView.Adapter<SimilarAlbumAdapte
 
         Glide.with(context)
                 .load(group.images.get(0))
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .into(holder.cover);
 
         holder.itemView.setOnClickListener(v -> {

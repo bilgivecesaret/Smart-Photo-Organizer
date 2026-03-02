@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-import com.example.smart_photo_organizer.util.AutoCleanup;
+import com.example.smart_photo_organizer.util.AutoCleanupSimilar;
 
 import java.util.List;
 
@@ -25,8 +25,8 @@ public class AutoCleanupWorker extends Worker {
     @Override
     public Result doWork() {
         Log.d("AUTO_DEBUG", "Worker started");
-        AutoCleanup cleanup =
-                new AutoCleanup(getApplicationContext());
+        AutoCleanupSimilar cleanup =
+                new AutoCleanupSimilar(getApplicationContext());
 
         List<Uri> deleteUris =
                 cleanup.findSimilarAndReturnUris();

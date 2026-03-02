@@ -53,7 +53,7 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
         Glide.with(context)
                 .load(item.getPreviewUri())
                 .centerCrop()
-                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .into(holder.imgPreview);
 
 

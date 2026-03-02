@@ -19,7 +19,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -37,7 +36,6 @@ import com.example.smart_photo_organizer.fragment.NoImageFragment;
 import com.example.smart_photo_organizer.fragment.PhotosFragment;
 import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
-import com.example.smart_photo_organizer.util.AutoCleanup;
 import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 

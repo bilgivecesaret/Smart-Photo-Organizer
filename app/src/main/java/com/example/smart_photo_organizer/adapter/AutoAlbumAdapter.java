@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.model.AutoAlbum;
 import java.util.List;
@@ -45,6 +46,7 @@ public class AutoAlbumAdapter extends RecyclerView.Adapter<AutoAlbumAdapter.View
         if (!album.photos.isEmpty()) {
             Glide.with(context)
                     .load(album.photos.get(0).uri)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .centerCrop()
                     .into(holder.ivCover);
         }

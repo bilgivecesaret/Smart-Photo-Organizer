@@ -6,19 +6,17 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import com.example.smart_photo_organizer.model.HashItem;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AutoCleanup {
+public class AutoCleanupSimilar {
 
     private static final double AI_THRESHOLD = 0.80;
     private final Context context;
 
-    public AutoCleanup(Context context) {
+    public AutoCleanupSimilar(Context context) {
         this.context = context.getApplicationContext();
     }
     public List<Uri> findSimilarAndReturnUris() {
