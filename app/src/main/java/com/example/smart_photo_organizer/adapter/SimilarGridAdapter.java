@@ -14,13 +14,20 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.smart_photo_organizer.R;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.ViewHolder> {
 
     private final List<Uri> images;
-    private final List<Uri> selectedImages = new ArrayList<>();
+    private final Set<Integer> selectedPositions = new HashSet<>();
+
     private SelectionListener selectionListener;
+    private OnImageClickListener clickListener;
+
+    private boolean selectionMode = false;
+    private boolean dragSelecting = false;
 
     public SimilarGridAdapter(List<Uri> images, SelectionListener selectionListener) {
         this.images = images != null ? images : new ArrayList<>();
@@ -31,25 +38,37 @@ public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.
         void onSelectionChanged(int count);
     }
 
+    public interface OnImageClickListener {
+        void onImageClick(Uri uri, int position);
+    }
+
     public void setSelectionListener(SelectionListener listener) {
         this.selectionListener = listener;
+    }
+
+    public void setOnImageClickListener(OnImageClickListener listener) {
+        this.clickListener = listener;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_duplicate_grid, parent, false);
+
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
         Uri uri = images.get(position);
-        boolean isSelected = selectedImages.contains(uri);
+
+        boolean isSelected = selectedPositions.contains(position);
 
         Glide.with(holder.imageView)
-                .load(images.get(position))
+                .load(uri)
                 .override(300, 300)
                 .centerCrop()
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
@@ -58,87 +77,134 @@ public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.
 
         holder.selectionOverlay.setVisibility(isSelected ? View.VISIBLE : View.GONE);
         holder.imgCheck.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+
         holder.imageView.setScaleX(isSelected ? 0.95f : 1f);
         holder.imageView.setScaleY(isSelected ? 0.95f : 1f);
 
         holder.itemView.setOnClickListener(v -> {
-            boolean selected = selectedImages.contains(uri);
 
-            if (selectedImages.isEmpty()) {
-                selectedImages.add(uri);
+            int pos = holder.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+
+            if (selectionMode) {
+                toggleSelection(pos);
             } else {
-                if (selected) selectedImages.remove(uri);
-                else selectedImages.add(uri);
+                if (clickListener != null)
+                    clickListener.onImageClick(images.get(pos), pos);
             }
-
-            notifyItemChanged(holder.getAdapterPosition());
-
-            if (selectionListener != null)
-                selectionListener.onSelectionChanged(selectedImages.size());
         });
 
         holder.itemView.setOnLongClickListener(v -> {
-            if (!selectedImages.contains(uri)) {
-                selectedImages.add(uri);
-                notifyItemChanged(holder.getAdapterPosition());
-            }
 
-            if (selectionListener != null)
-                selectionListener.onSelectionChanged(selectedImages.size());
+            int pos = holder.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return true;
+
+            selectionMode = true;
+            toggleSelection(pos);
+
+            dragSelecting = true;
 
             return true;
         });
-    }
 
+    }
 
     @Override
     public int getItemCount() {
         return images.size();
     }
-    public void selectAll(boolean select) {
-        selectedImages.clear();
-        if (select) {
-            selectedImages.addAll(images);
-        }
-        notifyDataSetChanged();
 
-        if (selectionListener != null) {
-            selectionListener.onSelectionChanged(selectedImages.size());
+    private void toggleSelection(int position) {
+
+        if (selectedPositions.contains(position)) {
+            selectedPositions.remove(position);
+        } else {
+            selectedPositions.add(position);
         }
+
+        if (selectedPositions.isEmpty()) {
+            selectionMode = false;
+        }
+
+        notifyItemChanged(position);
+
+        notifySelectionChanged();
+    }
+
+    private void notifySelectionChanged() {
+        if (selectionListener != null)
+            selectionListener.onSelectionChanged(selectedPositions.size());
+    }
+
+    public void selectAll(boolean select) {
+
+        selectedPositions.clear();
+
+        if (select) {
+            for (int i = 0; i < images.size(); i++) {
+                selectedPositions.add(i);
+            }
+            selectionMode = true;
+        } else {
+            selectionMode = false;
+        }
+
+        notifyDataSetChanged();
+        notifySelectionChanged();
     }
 
     public void clearSelection() {
-        selectedImages.clear();
+
+        selectedPositions.clear();
+        selectionMode = false;
+
         notifyDataSetChanged();
-        if (selectionListener != null)
-            selectionListener.onSelectionChanged(0);
+        notifySelectionChanged();
     }
 
     public void removeSelectedImages() {
-        if (selectedImages.isEmpty()) return;
-        List<Uri> toRemove = new ArrayList<>(selectedImages);
+
+        if (selectedPositions.isEmpty()) return;
+
+        List<Uri> toRemove = new ArrayList<>();
+
+        for (Integer pos : selectedPositions) {
+            if (pos < images.size())
+                toRemove.add(images.get(pos));
+        }
+
         images.removeAll(toRemove);
-        selectedImages.clear();
+
+        selectedPositions.clear();
+        selectionMode = false;
+
         notifyDataSetChanged();
-        if (selectionListener != null)
-            selectionListener.onSelectionChanged(0);
+        notifySelectionChanged();
     }
 
     public List<Uri> getSelectedImages() {
-        return new ArrayList<>(selectedImages);
+
+        List<Uri> selected = new ArrayList<>();
+
+        for (Integer pos : selectedPositions) {
+            if (pos < images.size())
+                selected.add(images.get(pos));
+        }
+
+        return selected;
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+
         ImageView imageView, imgCheck;
         View selectionOverlay;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             imageView = itemView.findViewById(R.id.imgPhoto);
             selectionOverlay = itemView.findViewById(R.id.selectionOverlay);
             imgCheck = itemView.findViewById(R.id.imgCheck);
         }
     }
-
 }
-

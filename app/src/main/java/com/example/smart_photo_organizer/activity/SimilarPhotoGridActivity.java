@@ -72,6 +72,17 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         adapter = new SimilarGridAdapter(images, count -> {
             updateUI(count);
         });
+
+        adapter.setOnImageClickListener((uri, position) -> {
+
+            Intent intent = new Intent(this, PhotoViewerActivity.class);
+            intent.putParcelableArrayListExtra("images", images);
+            intent.putExtra("position", position);
+
+            startActivity(intent);
+
+        });
+
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         recyclerView.setAdapter(adapter);
 

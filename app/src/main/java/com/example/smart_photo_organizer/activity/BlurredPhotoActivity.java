@@ -2,6 +2,7 @@ package com.example.smart_photo_organizer.activity;
 
 import android.app.PendingIntent;
 import android.content.ContentUris;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -207,6 +208,16 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         recyclerView.setVisibility(View.VISIBLE);
 
         adapter = new SimilarGridAdapter(new ArrayList<>(blurredUris), this::updateUI);
+
+        adapter.setSelectionListener(count -> updateUI(count));
+
+        adapter.setOnImageClickListener((uri, position) -> {
+            // Tek tık ile full screen PhotoViewerActivity aç
+            Intent intent = new Intent(BlurredPhotoActivity.this, PhotoViewerActivity.class);
+            intent.putParcelableArrayListExtra("images", new ArrayList<>(blurredUris));
+            intent.putExtra("position", position);
+            startActivity(intent);
+        });
 
         recyclerView.setAdapter(adapter);
 
