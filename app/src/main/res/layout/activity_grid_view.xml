@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/duplicatePhotoGrid"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/photosGridView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -10,6 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:id="@+id/topBar"
         android:orientation="horizontal"
         android:padding="12dp"
         android:gravity="center_vertical">
@@ -41,6 +43,16 @@
             android:visibility="gone"
             android:layout_marginStart="8dp" />
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:layout_constraintTop_toBottomOf="@+id/txtTitle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- GRID -->
     <androidx.recyclerview.widget.RecyclerView

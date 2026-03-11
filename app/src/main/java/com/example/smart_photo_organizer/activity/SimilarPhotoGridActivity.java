@@ -10,6 +10,7 @@ import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -33,6 +34,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private CheckBox selectAll;
+    private ProgressBar progressBar;
     private Button delete, cancel;
     private SimilarGridAdapter adapter;
     private long lastDeletedSize = 0;
@@ -50,20 +52,21 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_similar_grid);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.duplicatePhotoGrid), (v, insets) -> {
+        setContentView(R.layout.activity_grid_view);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.photosGridView), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
             return insets;
         });
 
         recyclerView = findViewById(R.id.recyclerGrid);
+        progressBar = findViewById(R.id.progressBar);
         selectAll = findViewById(R.id.cbSelectAll);
         delete = findViewById(R.id.btnDelete);
         cancel = findViewById(R.id.btnCancel);
 
         ArrayList<Uri> images = getIntent().getParcelableArrayListExtra("images");
-
+        progressBar.setVisibility(View.GONE);
         if (images == null || images.isEmpty()) {
             Toast.makeText(this, "Gösterilecek fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
             finish();
