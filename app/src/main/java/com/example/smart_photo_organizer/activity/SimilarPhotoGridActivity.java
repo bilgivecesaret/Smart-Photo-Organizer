@@ -84,9 +84,14 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         });
 
         adapter.setSelectionListener(count -> {
-            boolean hasSelection = count > 0;
-            delete.setVisibility(hasSelection ? View.VISIBLE : View.GONE);
-            cancel.setVisibility(hasSelection ? View.VISIBLE : View.GONE);
+            if (count > 0) {
+                cancel.setVisibility(View.VISIBLE);
+                delete.setVisibility(View.VISIBLE);
+                delete.setText("Delete (" + count + ")");
+            } else {
+                cancel.setVisibility(View.GONE);
+                delete.setVisibility(View.GONE);
+            }
 
             selectAll.setOnCheckedChangeListener(null);
             selectAll.setChecked(count == adapter.getItemCount());
@@ -127,9 +132,13 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
     }
 
     private void updateUI(int count) {
-        boolean hasSelection = count > 0;
-        delete.setVisibility(hasSelection ? View.VISIBLE : View.GONE);
-        cancel.setVisibility(hasSelection ? View.VISIBLE : View.GONE);
+        if (count > 0) {
+            delete.setVisibility(View.VISIBLE);
+            delete.setText("Delete (" + count + ")");
+        } else {
+            delete.setVisibility(View.GONE);
+            cancel.setVisibility(View.GONE);
+        }
 
         // Select All Checkbox'ının durumunu güncelle ama sonsuz döngüyü engelle
         selectAll.setOnCheckedChangeListener(null);

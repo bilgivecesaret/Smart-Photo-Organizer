@@ -45,7 +45,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private LinearLayout topBar;
     private CheckBox cbSelectAll;
-    private Button btnDelete;
+    private Button btnDelete, btnCancel;
 
     private SimilarGridAdapter adapter;
     private final List<Uri> blurredUris = Collections.synchronizedList(new ArrayList<>());
@@ -99,10 +99,16 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         topBar = findViewById(R.id.topBar);
         cbSelectAll = findViewById(R.id.cbSelectAll);
         btnDelete = findViewById(R.id.btnDelete);
+        btnCancel = findViewById(R.id.btnCancel);
 
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         btnDelete.setOnClickListener(v -> deleteSelectedPhotos());
+        btnCancel.setOnClickListener(v -> {
+            adapter.clearSelection();
+            btnDelete.setVisibility(View.GONE);
+            btnCancel.setVisibility(View.GONE);
+        });
 
         cbSelectAll.setOnClickListener(v -> {
             if (adapter != null) {
@@ -208,9 +214,11 @@ public class BlurredPhotoActivity extends AppCompatActivity {
 
     private void updateUI(int count) {
         if (count > 0) {
+            btnCancel.setVisibility(View.VISIBLE);
             btnDelete.setVisibility(View.VISIBLE);
             btnDelete.setText("Delete (" + count + ")");
         } else {
+            btnCancel.setVisibility(View.GONE);
             btnDelete.setVisibility(View.GONE);
         }
 
