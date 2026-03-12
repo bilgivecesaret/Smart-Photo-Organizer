@@ -13,6 +13,13 @@ import org.opencv.imgproc.Imgproc;
 
 public class BlurDetector {
 
+    static {
+        if (!org.opencv.android.OpenCVLoader.initDebug()) {
+            Log.e("BlurDetector", "OpenCV kütüphanesi yüklenemedi!");
+        } else {
+            Log.d("BlurDetector", "OpenCV kütüphanesi başarıyla yüklendi.");
+        }
+    }
     private static final String TAG = "BlurDetector";
     
     private static final double BLUR_THRESHOLD = 20.0;
