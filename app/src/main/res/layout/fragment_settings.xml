@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_settings"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:id="@+id/fragment_settings">
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/textView1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="32dp"
+        android:gravity="center"
         android:text="@string/title_settings"
         android:textSize="28sp"
         android:textStyle="bold" />
@@ -28,10 +27,10 @@
             android:id="@+id/permissionSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="20dp"
+            android:layout_gravity="center_horizontal"
             android:checked="true"
             android:maxWidth="320dp"
-            android:layout_gravity="center_horizontal"
+            android:padding="20dp"
             android:text="Permissions"
             android:textSize="20sp" />
 
@@ -42,8 +41,8 @@
             android:layout_margin="20dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="6dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutline">
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -55,37 +54,37 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:paddingBottom="8dp"
                     android:text="Auto Cleanup"
-                    android:textStyle="bold"
                     android:textSize="20sp"
-                    android:paddingBottom="8dp"/>
+                    android:textStyle="bold" />
 
                 <!-- Divider -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="?attr/colorOutlineVariant"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="8dp"
+                    android:background="?attr/colorOutlineVariant" />
 
                 <!-- Girintili Switch 1 -->
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/autoCleanupForSimilarImagesSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Similar Photos"
-                    android:textSize="18sp"
+                    android:paddingVertical="8dp"
                     android:paddingStart="24dp"
-                    android:paddingVertical="8dp"/>
+                    android:text="Similar Photos"
+                    android:textSize="18sp" />
 
                 <!-- Girintili Switch 2 -->
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/autoCleanupForBlurredImagesSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Blurred Photos"
-                    android:textSize="18sp"
+                    android:paddingVertical="8dp"
                     android:paddingStart="24dp"
-                    android:paddingVertical="8dp"/>
+                    android:text="Blurred Photos"
+                    android:textSize="18sp" />
 
             </LinearLayout>
 
@@ -95,10 +94,10 @@
             android:id="@+id/autoAlbumSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="20dp"
-            android:maxWidth="320dp"
             android:layout_gravity="center_horizontal"
             android:checked="false"
+            android:maxWidth="320dp"
+            android:padding="20dp"
             android:text="Auto create album"
             android:textSize="20sp" />
 

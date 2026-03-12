@@ -1,9 +1,14 @@
 package com.example.smart_photo_organizer.fragment;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -25,6 +30,21 @@ public class SettingsFragment extends Fragment {
     public static final String PREFS_NAME = "app_prefs";
     private static final String KEY_PERMISSION_SWITCH = "permission_switch";
     public static final String KEY_AUTO_CLEANUP_SIMILAR = "auto_cleanup_similar";
+    public static final String KEY_AUTO_CLEANUP_BLURRED = "auto_cleanup_blurred";
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                Toast.makeText(getContext(), "Bildirim izni verildi! Bulanık fotoğraflar bulunduğunda haber verilecek.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Bildirim izni reddedildi. Arka planda tarama yapılsa da bildirim almayacaksınız.", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -34,6 +54,10 @@ public class SettingsFragment extends Fragment {
         prefs = getActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         permissionSwitch = root.findViewById(R.id.permissionSwitch);
         autoCleanupForSimilarImagesSwitch = root.findViewById(R.id.autoCleanupForSimilarImagesSwitch);
+        autoCleanupForBlurredImagesSwitch = root.findViewById(R.id.autoCleanupForBlurredImagesSwitch);
+
+        boolean isBlurredActive = prefs.getBoolean(KEY_AUTO_CLEANUP_BLURRED, false);
+        autoCleanupForBlurredImagesSwitch.setChecked(isBlurredActive);
 
         boolean isAutoCleanupActive = prefs.getBoolean(KEY_AUTO_CLEANUP_SIMILAR, false);
         autoCleanupForSimilarImagesSwitch.setChecked(isAutoCleanupActive);
@@ -67,6 +91,19 @@ public class SettingsFragment extends Fragment {
             }
         });
 
+        autoCleanupForBlurredImagesSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                prefs.edit().putBoolean(KEY_AUTO_CLEANUP_BLURRED, isChecked).commit();
+
+                if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    }
+                }
+            }
+        });
         return root;
     }
 

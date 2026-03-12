@@ -37,6 +37,7 @@ import com.example.smart_photo_organizer.fragment.PhotosFragment;
 import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
 import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
+import com.example.smart_photo_organizer.worker.BlurCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -51,6 +52,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        if (!org.opencv.android.OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "OpenCV yükleme hatası!");
+        } else {
+            Log.d("OpenCV", "OpenCV başarıyla çalışıyor.");
+        }
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
@@ -123,6 +131,13 @@ public class MainActivity extends AppCompatActivity {
             Log.d("AUTO_DEBUG", "Permission OK, starting cleanup");
             startAutoCleanup();
         }
+
+        boolean autoCleanupBlurred = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_BLURRED, false);
+
+        if (autoCleanupBlurred && hasStoragePermission()) {
+            Log.d("BLUR_WORKER", "Starting Blurred Photo Cleanup Worker");
+            startBlurCleanupWorker();
+        }
     }
 
     private boolean hasStoragePermission() {
@@ -163,6 +178,14 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
         bottomNavigationView.setSelectedItemId(R.id.photos);
+    }
+
+    private void startBlurCleanupWorker() {
+        OneTimeWorkRequest blurRequest =            //PERİYODİKLEŞTİRİLİCEK
+                new OneTimeWorkRequest.Builder(BlurCleanupWorker.class)
+                        .build();
+
+        WorkManager.getInstance(this).enqueue(blurRequest);
     }
     private void startAutoCleanup() {
 
