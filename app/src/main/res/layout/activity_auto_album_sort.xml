@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutAutoAlbumSort"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAutoAlbums"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- ProgressBar -->
+    <ProgressBar
+        android:id="@+id/progressBarCreateAlbum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"/>
+
+    <!-- Butonlar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnDateSort"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date Sort"/>
+
+        <Button
+            android:id="@+id/btnHumanSort"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Human Sort"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+
+</LinearLayout>
