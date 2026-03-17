@@ -28,6 +28,7 @@ import com.example.smart_photo_organizer.activity.PhotoViewerActivity;
 import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.ImageFetcher;
+import com.example.smart_photo_organizer.util.Notification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class PhotosFragment extends Fragment {
     private ContentObserver observer;
     private final Handler debounceHandler = new Handler(Looper.getMainLooper());
     private static final long DEBOUNCE = 600;
+    private long lastDeletedSize = 0;
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -49,6 +51,7 @@ public class PhotosFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == 100 && resultCode == -1) {
+            Notification.showSuccessDialog(this.requireActivity(),Notification.formatSize(lastDeletedSize));
             adapter.removeSelectedImages();
         }
     }
@@ -102,19 +105,15 @@ public class PhotosFragment extends Fragment {
         delete.setOnClickListener(v -> {
 
             List<Uri> selected = adapter.getSelectedImages();
-
             if (selected.isEmpty()) return;
-
+            lastDeletedSize = Notification.calculateTotalSize(requireContext(), selected);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-
                 try {
-
                     PendingIntent pi =
                             MediaStore.createDeleteRequest(
                                     requireContext().getContentResolver(),
                                     selected
                             );
-
                     startIntentSenderForResult(
                             pi.getIntentSender(),
                             100,
@@ -124,28 +123,20 @@ public class PhotosFragment extends Fragment {
                             0,
                             null
                     );
-
                 } catch (Exception e) {
-
                     e.printStackTrace();
 
                 }
-
-            }
-            else {
-
+            } else {
                 for (Uri uri : selected) {
-
                     requireContext()
                             .getContentResolver()
                             .delete(uri,null,null);
 
                 }
-
+                Notification.showSuccessDialog(this.requireActivity(), Notification.formatSize(lastDeletedSize));
                 adapter.removeSelectedImages();
-
             }
-
         });
 
         loadImages();

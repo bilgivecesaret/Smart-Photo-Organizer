@@ -3,20 +3,17 @@ package com.example.smart_photo_organizer.activity;
 import static com.example.smart_photo_organizer.permission.PermissionHelper.openAppSettings;
 
 import android.Manifest;
-import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,6 +33,7 @@ import com.example.smart_photo_organizer.fragment.NoImageFragment;
 import com.example.smart_photo_organizer.fragment.PhotosFragment;
 import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
+import com.example.smart_photo_organizer.util.SimilarPhotoCache;
 import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
 import com.example.smart_photo_organizer.worker.BlurCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -48,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
     private long backPressedTime = 0; // Son back tuşu zamanı
     private static final int BACK_PRESS_INTERVAL = 2000; // 2 saniye
     boolean autoCleanup;
-    private ActivityResultLauncher<IntentSenderRequest> deleteLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,18 +64,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
             return insets;
         });
-
-        deleteLauncher =
-                registerForActivityResult(
-                        new ActivityResultContracts.StartIntentSenderForResult(),
-                        result -> {
-                            if (result.getResultCode() == RESULT_OK) {
-                                Toast.makeText(this,
-                                        "Similar photos deleted",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                            Log.d("AUTO_DEBUG", "Delete result code: " + result.getResultCode());
-                        });
 
         // BACK TUŞU CALLBACK (Sadece belirli fragmentlerde uygulamayı kapatır)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -181,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startBlurCleanupWorker() {
-        OneTimeWorkRequest blurRequest =            //PERİYODİKLEŞTİRİLİCEK
+        OneTimeWorkRequest blurRequest =
                 new OneTimeWorkRequest.Builder(BlurCleanupWorker.class)
                         .build();
 
@@ -198,54 +183,27 @@ public class MainActivity extends AppCompatActivity {
         WorkManager.getInstance(this)
                 .getWorkInfoByIdLiveData(request.getId())
                 .observe(this, workInfo -> {
-                    Log.d("AUTO_DEBUG", "Observer triggered");
-                    if (workInfo != null
-                            && workInfo.getState().isFinished()) {
 
-                        String uriString =
-                                workInfo.getOutputData()
-                                        .getString(AutoCleanupWorker.KEY_URIS);
+                    if (workInfo == null) return;
 
-                        if (uriString == null || uriString.isEmpty())
-                            return;
+                    Log.d("AUTO_DEBUG", "Observer triggered, state: " + workInfo.getState());
 
-                        List<Uri> uriList = new ArrayList<>();
+                    if (!workInfo.getState().isFinished()) return;
 
-                        for (String s : uriString.split(",")) {
-                            if (!s.isEmpty())
-                                uriList.add(Uri.parse(s));
-                        }
+                    boolean hasResult =
+                            workInfo.getOutputData().getBoolean("HAS_RESULT", false);
 
-                        Log.d("AUTO_DEBUG", "Launching delete request with size: " + uriList.size());
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            try {
-                                PendingIntent pi =
-                                        MediaStore.createDeleteRequest(
-                                                getContentResolver(),
-                                                uriList);
+                    if (!hasResult) return;
 
-                                IntentSenderRequest request1 =
-                                        new IntentSenderRequest.Builder(
-                                                pi.getIntentSender())
-                                                .build();
+                    ArrayList<Uri> uriList =
+                            new ArrayList<>(SimilarPhotoCache.cachedUris);
 
-                                deleteLauncher.launch(request1);
+                    Log.d("AUTO_DEBUG", "Opening grid with size: " + uriList.size());
 
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-
-                            for (Uri uri : uriList) {
-                                getContentResolver()
-                                        .delete(uri, null, null);
-                            }
-
-                            Toast.makeText(this,
-                                    "Similar photos deleted",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                    Intent intent = new Intent(this, SimilarPhotoGridActivity.class);
+                    intent.putParcelableArrayListExtra("images", uriList);
+                    intent.putExtra("from_auto_cleanup", true);
+                    startActivity(intent);
                 });
     }
 
@@ -263,4 +221,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 }

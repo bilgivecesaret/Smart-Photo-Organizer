@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,32 +18,41 @@ public class AutoCleanupSimilar {
     public AutoCleanupSimilar(Context context) {
         this.context = context.getApplicationContext();
     }
-    public List<Uri> findSimilarAndReturnUris() {
+
+    public List<Uri> findAllSimilarUris() {
 
         List<Uri> allImages = loadAllImagesSync();
+        List<Uri> result = new ArrayList<>();
 
-        Log.d("AUTO_DEBUG", "Total images loaded: " + allImages.size());
-
-        List<Uri> deleteList = new ArrayList<>();
         int n = allImages.size();
-        if (n == 0) return deleteList;
+        if (n == 0) return result;
 
         AIEmbeddingUtil ai = new AIEmbeddingUtil(context);
         float[][] embeddings = new float[n][];
+
         for (int i = 0; i < n; i++) {
             embeddings[i] = ai.getEmbedding(context, allImages.get(i));
         }
 
         UnionFind uf = new UnionFind(n);
+
         for (int i = 0; i < n; i++) {
             for (int j = i + 1; j < n; j++) {
+
                 if (embeddings[i] == null || embeddings[j] == null) continue;
-                double similarity = AIEmbeddingUtil.cosineSimilarity(embeddings[i], embeddings[j]);
-                if (similarity > AI_THRESHOLD) uf.union(i, j);
+
+                double similarity =
+                        AIEmbeddingUtil.cosineSimilarity(
+                                embeddings[i], embeddings[j]);
+
+                if (similarity > AI_THRESHOLD) {
+                    uf.union(i, j);
+                }
             }
         }
 
         Map<Integer, List<Uri>> clusters = new HashMap<>();
+
         for (int i = 0; i < n; i++) {
             int root = uf.find(i);
             clusters.putIfAbsent(root, new ArrayList<>());
@@ -53,14 +61,11 @@ public class AutoCleanupSimilar {
 
         for (List<Uri> cluster : clusters.values()) {
             if (cluster.size() > 1) {
-                for (int i = 1; i < cluster.size(); i++) {
-                    deleteList.add(cluster.get(i));
-                }
+                result.addAll(cluster);
             }
         }
 
-        Log.d("AUTO_DEBUG", "Found delete count: " + deleteList.size());
-        return deleteList;
+        return result;
     }
     private List<Uri> loadAllImagesSync() {
         List<Uri> allImages = new ArrayList<>();

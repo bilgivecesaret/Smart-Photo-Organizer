@@ -26,8 +26,7 @@ public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.
     private SelectionListener selectionListener;
     private OnImageClickListener clickListener;
 
-    private boolean selectionMode = false;
-    private boolean dragSelecting = false;
+    private boolean selectionMode;
 
     public SimilarGridAdapter(List<Uri> images, SelectionListener selectionListener) {
         this.images = images != null ? images : new ArrayList<>();
@@ -101,8 +100,6 @@ public class SimilarGridAdapter extends RecyclerView.Adapter<SimilarGridAdapter.
 
             selectionMode = true;
             toggleSelection(pos);
-
-            dragSelecting = true;
 
             return true;
         });

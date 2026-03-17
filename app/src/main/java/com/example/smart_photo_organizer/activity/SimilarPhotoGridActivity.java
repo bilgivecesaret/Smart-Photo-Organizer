@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
+import com.example.smart_photo_organizer.util.Notification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +43,10 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
     private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
             registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK) {
-                    showSuccessDialog(formatSize(lastDeletedSize));
+                    Notification.showSuccessDialog(this,Notification.formatSize(lastDeletedSize));
                     adapter.removeSelectedImages();
                     setResult(RESULT_OK);
+                    finish();
                 }
             });
 
@@ -66,9 +68,10 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         cancel = findViewById(R.id.btnCancel);
 
         ArrayList<Uri> images = getIntent().getParcelableArrayListExtra("images");
+        boolean fromAuto = getIntent().getBooleanExtra("from_auto_cleanup", false);
         progressBar.setVisibility(View.GONE);
         if (images == null || images.isEmpty()) {
-            Toast.makeText(this, "Gösterilecek fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No photos were found to display.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -76,6 +79,14 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
             updateUI(count);
         });
 
+        adapter.selectAll(true);
+
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        recyclerView.setAdapter(adapter);
+
+        if (fromAuto && images != null && !images.isEmpty()) {
+            Notification.showAutoCleanupInfoDialog(this,images.size());
+        }
         adapter.setOnImageClickListener((uri, position) -> {
 
             Intent intent = new Intent(this, PhotoViewerActivity.class);
@@ -85,9 +96,6 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
             startActivity(intent);
 
         });
-
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-        recyclerView.setAdapter(adapter);
 
         setupSelectAllListener();
 
@@ -115,7 +123,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         delete.setOnClickListener(v -> {
             List<Uri> selected = adapter.getSelectedImages();
             if (selected.isEmpty()) return;
-            lastDeletedSize = calculateTotalSize(selected);
+            lastDeletedSize = Notification.calculateTotalSize(this,selected);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 try {
@@ -134,7 +142,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
                         Toast.makeText(this, "Cannot delete: " + uri.toString(), Toast.LENGTH_SHORT).show();
                     }
                 }
-                showSuccessDialog(formatSize(lastDeletedSize));
+                Notification.showSuccessDialog(this,Notification.formatSize(lastDeletedSize));
                 adapter.removeSelectedImages();
                 Toast.makeText(this, "Photos deleted", Toast.LENGTH_SHORT).show();
                 Intent result = new Intent();
@@ -165,41 +173,5 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
             adapter.selectAll(isChecked);
         });
     }
-    private long calculateTotalSize(List<Uri> uris) {
-        long totalSize = 0;
-        for (Uri uri : uris) {
-            try (Cursor cursor = getContentResolver().query(uri,
-                    new String[]{MediaStore.Images.Media.SIZE}, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    totalSize += cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return totalSize;
-    }
 
-    // Boyutu okunabilir hale getirmek için (MB/KB)
-    private String formatSize(long size) {
-        if (size <= 0) return "0 B";
-        final String[] units = new String[]{"B", "KB", "MB", "GB"};
-        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-        return new java.text.DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-    }
-
-    private void showSuccessDialog(String savedSpace) {
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle("Temizlik Tamamlandı!")
-                .setMessage("Başarıyla " + savedSpace + " kadar alan boşaltıldı.")
-                .setPositiveButton("Harika", (dialog, which) -> {
-                    dialog.dismiss();
-                    Intent result = new Intent();
-                    result.putExtra("photos_deleted", true);
-                    setResult(RESULT_OK, result);
-                    finish();
-                })
-                .setCancelable(false)
-                .show();
-    }
 }
