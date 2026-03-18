@@ -9,8 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 
-import androidx.annotation.NonNull;
-
 import com.example.smart_photo_organizer.model.HashItem;
 
 import java.io.File;

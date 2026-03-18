@@ -25,7 +25,7 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 
 public class SettingsFragment extends Fragment {
 
-    private MaterialSwitch permissionSwitch, autoCleanupForSimilarImagesSwitch, autoCleanupForBlurredImagesSwitch, autoAlbumSwitch;
+    private MaterialSwitch permissionSwitch, autoCleanupForSimilarImagesSwitch, autoCleanupForBlurredImagesSwitch;
     public static SharedPreferences prefs;
     public static final String PREFS_NAME = "app_prefs";
     private static final String KEY_PERMISSION_SWITCH = "permission_switch";

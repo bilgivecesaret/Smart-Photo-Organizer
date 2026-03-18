@@ -13,4 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
-openCV/build/.transforms/
+/openCV/build

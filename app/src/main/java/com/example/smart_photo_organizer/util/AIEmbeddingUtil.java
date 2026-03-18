@@ -20,8 +20,8 @@ import java.util.Arrays;
 
 public class AIEmbeddingUtil {
 
-    private static final int INPUT_SIZE = 224;
-    private static final int EMBEDDING_SIZE = 1792;
+    private static final int INPUT_SIZE = 96;
+    private static final int EMBEDDING_SIZE = 1280;
 
     private Interpreter interpreter;
 
@@ -36,7 +36,7 @@ public class AIEmbeddingUtil {
     private MappedByteBuffer loadModelFile(Context context) throws IOException {
 
         AssetFileDescriptor fileDescriptor =
-                context.getAssets().openFd("mobilenet-v2-tensorflow2-140-224-feature-vector.tflite");
+                context.getAssets().openFd("mobilenet-v2-tensorflow2-035-96-feature-vector-v2.tflite");
 
         FileInputStream inputStream =
                 new FileInputStream(fileDescriptor.getFileDescriptor());
@@ -54,7 +54,6 @@ public class AIEmbeddingUtil {
     }
 
     public float[] getEmbedding(Context context, Uri uri) {
-        Log.d("AIEmbedding", "getEmbedding START");
         try {
             InputStream is = context.getContentResolver().openInputStream(uri);
             Bitmap bitmap = BitmapFactory.decodeStream(is);
@@ -76,7 +75,6 @@ public class AIEmbeddingUtil {
 
             interpreter.run(input, output);
             int[] shape = interpreter.getOutputTensor(0).shape();
-            Log.d("AIEmbedding", "Output shape: " + Arrays.toString(shape));
 
             bitmap.recycle();
             scaled.recycle();
