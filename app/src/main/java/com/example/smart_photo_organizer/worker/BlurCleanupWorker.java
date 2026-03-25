@@ -100,6 +100,7 @@ public class BlurCleanupWorker extends Worker {
         }
 
         Intent intent = new Intent(context, BlurredPhotoActivity.class);
+        intent.putExtra("from_notification", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;

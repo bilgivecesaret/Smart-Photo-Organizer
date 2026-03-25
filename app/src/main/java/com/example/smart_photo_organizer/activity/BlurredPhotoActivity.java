@@ -221,6 +221,13 @@ public class BlurredPhotoActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(adapter);
 
+        boolean fromNotification = getIntent().getBooleanExtra("from_notification", false);
+        if (fromNotification) {
+            adapter.selectAll(true);
+            cbSelectAll.setChecked(true);
+            updateUI(adapter.getItemCount());
+        }
+
     }
 
     private void updateUI(int count) {
