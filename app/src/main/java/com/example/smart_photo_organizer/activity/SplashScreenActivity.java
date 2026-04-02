@@ -1,7 +1,9 @@
 package com.example.smart_photo_organizer.activity;
 
-import android.app.Activity;
+import static com.example.smart_photo_organizer.util.LocaleHelper.setLocale;
+
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,10 +20,14 @@ import com.example.smart_photo_organizer.util.FullMediaScan;
 import java.util.concurrent.Executors;
 
 public class SplashScreenActivity extends AppCompatActivity {
-    private Intent intent;
+    SharedPreferences prefs;
+    String lang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        lang = prefs.getString("app_language", "en");
+        setLocale(lang);
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_splash);

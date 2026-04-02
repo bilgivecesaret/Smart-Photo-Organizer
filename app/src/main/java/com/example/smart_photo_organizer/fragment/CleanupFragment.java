@@ -39,20 +39,20 @@ public class CleanupFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerViewFolders);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        folderList.add("Similar Photos");
-        folderList.add("Blurred Photos");
-        folderList.add("Create Auto Albums");
+        folderList.add(getString(R.string.folder1));
+        folderList.add(getString(R.string.folder2));
+        folderList.add(getString(R.string.folder3));
 
         adapter = new CleanUpAdapter(getContext(), folderList, item -> {
-            if (item.equals("Similar Photos")) {
+            if (item.equals(folderList.get(0))) {
                 Intent intent = new Intent(requireContext(), SimilarPhotoAlbumActivity.class);
                 startActivity(intent);
             }
-            else if (item.equals("Blurred Photos")) {
+            else if (item.equals(folderList.get(1))) {
                 Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.BlurredPhotoActivity.class);
                 startActivity(intent);
             }
-            else if (item.equals("Create Auto Albums")) {
+            else if (item.equals(folderList.get(2))) {
                 Intent intent = new Intent(requireContext(), com.example.smart_photo_organizer.activity.AutoAlbumActivity.class);
                 startActivity(intent);
             }

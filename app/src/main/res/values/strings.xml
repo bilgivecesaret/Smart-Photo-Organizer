@@ -10,11 +10,20 @@
     <string name="title_cleanup">CLEANUP</string>
     <string name="title_settings">SETTINGS</string>
     <string name="similar_photos">Similar Photos</string>
-
     <string name="auto_albums">Auto Albums</string>
     <string name="create_auto_albums">Create Auto Albums</string>
-    <string name="auto_album_desc">Fotoğrafları tarih ve konuma göre otomatik gruplandır.</string>
+    <string name="auto_album_desc">Automatically group photos by date and location.</string>
     <string name="splash_screen">Splash Screen</string>
-
+    <string name="notification_permission_granted">Notification permission granted!</string>
+    <string name="notification_permission_denied">Notification permission denied!</string>
+    <string name="permission_storage_switched">Please remove storage permissions in app settings</string>
+    <string name="app_language">App Language</string>
+    <string name="permissions">Permissions</string>
+    <string name="auto_cleanup">Auto Cleanup</string>
+    <string name="auto_similar_photos">Similar Photos</string>
+    <string name="blurred_photos">Blurred Photos</string>
+    <string name="folder1">Similar Photos</string>
+    <string name="folder2">Blurred Photos</string>
+    <string name="folder3">Create Auto Albums</string>
 </resources>
 

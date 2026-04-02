@@ -110,7 +110,7 @@ public class BlurCleanupWorker extends Worker {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, flags);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Bulanık Fotoğraflar Tespit Edildi")
                 .setContentText("Cihazınızda yer açmak için " + count + " adet bulanık fotoğrafı temizleyin.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

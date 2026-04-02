@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Akıllı Fotoğraf Düzenleyicisi</string>
+    <string name="hello_blank_fragment">Merhaba boş ekran</string>
+    <string name="settings">Ayarlar</string>
+    <string name="cleanup">Temizleme</string>
+    <string name="albums">Albüm</string>
+    <string name="photos">Fotoğraflar</string>
+    <string name="title_photos">FOTOLAR</string>
+    <string name="title_albums">ALBÜMLER</string>
+    <string name="title_cleanup">TEMİZLEME</string>
+    <string name="title_settings">AYARLAR</string>
+    <string name="similar_photos">Benzer Fotoğraflar</string>
+    <string name="auto_albums">Otomatik Albümler</string>
+    <string name="create_auto_albums">Otomatik Albümler Oluştur</string>
+    <string name="auto_album_desc">Fotoğrafları otomatik olarak tarih ve konuma göre gruplandır.</string>
+    <string name="splash_screen">Açılış Ekranı</string>
+    <string name="notification_permission_granted">Bildirim izni verildi!!</string>
+    <string name="notification_permission_denied">Bildirim izni reddedildi!</string>
+    <string name="permission_storage_switched">Lütfen uygulama ayarlarından depolama izinlerini kaldırın.</string>
+    <string name="app_language">Uygulama Dili</string>
+    <string name="permissions">İzinler</string>
+    <string name="auto_cleanup">Otomatik Temizleme</string>
+    <string name="auto_similar_photos">Benzer Fotoğraflar</string>
+    <string name="blurred_photos">Bulanık Fotoğraflar</string>
+    <string name="folder1">Benzer Fotoğraflar</string>
+    <string name="folder2">Bulanık Fotoğraflar</string>
+    <string name="folder3">Oto Albüm Oluşturucu</string>
+</resources>
