@@ -25,5 +25,6 @@
     <string name="folder1">Similar Photos</string>
     <string name="folder2">Blurred Photos</string>
     <string name="folder3">Create Auto Albums</string>
+    <string name="similar_album">Similar</string>
 </resources>
 

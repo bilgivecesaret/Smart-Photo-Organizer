@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 import com.example.smart_photo_organizer.util.Notification;
+import com.example.smart_photo_organizer.util.SimilarPhotoCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private Button delete, cancel;
     private SimilarGridAdapter adapter;
+    ArrayList<Uri> images;
     private long lastDeletedSize = 0;
 
     private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
@@ -67,7 +69,13 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         delete = findViewById(R.id.btnDelete);
         cancel = findViewById(R.id.btnCancel);
 
-        ArrayList<Uri> images = getIntent().getParcelableArrayListExtra("images");
+        boolean useCache = getIntent().getBooleanExtra("use_cache", false);
+        if (useCache && SimilarPhotoCache.cachedUris != null && !SimilarPhotoCache.cachedUris.isEmpty()) {
+            images = new ArrayList<>(SimilarPhotoCache.cachedUris);
+        } else {
+            images = getIntent().getParcelableArrayListExtra("images");
+        }
+
         boolean fromAuto = getIntent().getBooleanExtra("from_auto_cleanup", false);
         progressBar.setVisibility(View.GONE);
         if (images == null || images.isEmpty()) {

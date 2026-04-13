@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -23,6 +22,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
@@ -35,17 +35,17 @@ import com.example.smart_photo_organizer.fragment.SettingsFragment;
 import com.example.smart_photo_organizer.permission.PermissionHelper;
 import com.example.smart_photo_organizer.util.SimilarPhotoCache;
 import com.example.smart_photo_organizer.worker.AutoCleanupWorker;
+import com.example.smart_photo_organizer.worker.SimilarCleanupWorker;
 import com.example.smart_photo_organizer.worker.BlurCleanupWorker;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
     private long backPressedTime = 0; // Son back tuşu zamanı
     private static final int BACK_PRESS_INTERVAL = 2000; // 2 saniye
-    boolean autoCleanup;
+    boolean autoCleanupSimilar, autoCleanupBlurred;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,18 +110,17 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
 
-        autoCleanup = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
+        autoCleanupSimilar = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
+        autoCleanupBlurred = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_BLURRED, false);
 
-        if (autoCleanup && hasStoragePermission()) {
-            Log.d("AUTO_DEBUG", "Permission OK, starting cleanup");
-            startAutoCleanup();
-        }
-
-        boolean autoCleanupBlurred = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_BLURRED, false);
-
-        if (autoCleanupBlurred && hasStoragePermission()) {
-            Log.d("BLUR_WORKER", "Starting Blurred Photo Cleanup Worker");
-            startBlurCleanupWorker();
+        if (hasStoragePermission()) {
+            if (autoCleanupSimilar && autoCleanupBlurred) {
+                startAutoCleanup();
+            } else if (autoCleanupSimilar) {
+                startSimilarPhotoCleanup();
+            } else if (autoCleanupBlurred) {
+                startBlurCleanupWorker();
+            }
         }
     }
 
@@ -165,20 +164,38 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setSelectedItemId(R.id.photos);
     }
 
+    private void startAutoCleanup(){
+        OneTimeWorkRequest autoCleanupRequest = new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
+                .build();
+
+        WorkManager.getInstance(this).enqueueUniqueWork(
+                "auto_cleanup",
+                ExistingWorkPolicy.KEEP,
+                autoCleanupRequest
+        );
+    }
     private void startBlurCleanupWorker() {
         OneTimeWorkRequest blurRequest =
                 new OneTimeWorkRequest.Builder(BlurCleanupWorker.class)
                         .build();
 
-        WorkManager.getInstance(this).enqueue(blurRequest);
+        WorkManager.getInstance(this).enqueueUniqueWork(
+                "blur_cleanup",
+                ExistingWorkPolicy.KEEP,
+                blurRequest
+        );
     }
-    private void startAutoCleanup() {
+    private void startSimilarPhotoCleanup() {
 
         OneTimeWorkRequest request =
-                new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
+                new OneTimeWorkRequest.Builder(SimilarCleanupWorker.class)
                         .build();
 
-        WorkManager.getInstance(this).enqueue(request);
+        WorkManager.getInstance(this).enqueueUniqueWork(
+                "similar_cleanup",
+                ExistingWorkPolicy.KEEP,
+                request
+        );
 
         WorkManager.getInstance(this)
                 .getWorkInfoByIdLiveData(request.getId())

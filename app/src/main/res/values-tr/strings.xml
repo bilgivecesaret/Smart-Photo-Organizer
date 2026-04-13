@@ -26,4 +26,5 @@
     <string name="folder1">Benzer Fotoğraflar</string>
     <string name="folder2">Bulanık Fotoğraflar</string>
     <string name="folder3">Oto Albüm Oluşturucu</string>
+    <string name="similar_album">Benzer</string>
 </resources>

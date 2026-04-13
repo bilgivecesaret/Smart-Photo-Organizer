@@ -1,5 +1,8 @@
 package com.example.smart_photo_organizer.adapter;
 
+import static android.provider.Settings.System.getString;
+import static java.security.AccessController.getContext;
+
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -50,7 +53,8 @@ public class SimilarAlbumAdapter extends RecyclerView.Adapter<SimilarAlbumAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DuplicateGroup group = groups.get(position);
 
-        holder.count.setText(group.images.size() + " Similar");
+        String auxiliaryWord = context.getString(R.string.similar_album);
+        holder.count.setText(group.images.size() + " " + auxiliaryWord);
 
         Glide.with(context)
                 .load(group.images.get(0))
@@ -78,7 +82,6 @@ public class SimilarAlbumAdapter extends RecyclerView.Adapter<SimilarAlbumAdapte
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Yeni tasarım (item_duplicate_album.xml) ile eşleşen ID'ler
             cover = itemView.findViewById(R.id.imgCover);
             count = itemView.findViewById(R.id.txtCount);
         }

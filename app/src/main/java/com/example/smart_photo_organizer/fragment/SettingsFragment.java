@@ -78,7 +78,7 @@ public class SettingsFragment extends Fragment {
 
         syncSwitchWithPermissions();
 
-        languages = new ArrayList<ListData>();
+        languages = new ArrayList<>();
         prepareData();
         mSpinner = root.findViewById(R.id.spinnerLanguage);
         mSpinner.setAdapter(new SpinnerAdapter(this.getContext(), R.layout.spinner_layout, languages));
@@ -159,8 +159,8 @@ public class SettingsFragment extends Fragment {
     public void prepareData() {
         ListData prepare_data;
         prepare_data = new ListData();
-        prepare_data.setImage(R.drawable.usa);
-        prepare_data.setCountry("USD");
+        prepare_data.setImage(R.drawable.uk);
+        prepare_data.setCountry("EN");
         languages.add(prepare_data);
 
         prepare_data = new ListData();
