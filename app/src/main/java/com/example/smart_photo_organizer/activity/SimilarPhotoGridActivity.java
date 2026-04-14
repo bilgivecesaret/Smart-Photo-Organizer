@@ -87,8 +87,6 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
             updateUI(count);
         });
 
-        adapter.selectAll(true);
-
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         recyclerView.setAdapter(adapter);
 

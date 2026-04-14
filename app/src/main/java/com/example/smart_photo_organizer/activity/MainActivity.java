@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
     private long backPressedTime = 0; // Son back tuşu zamanı
     private static final int BACK_PRESS_INTERVAL = 2000; // 2 saniye
-    boolean autoCleanupSimilar, autoCleanupBlurred;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,37 +105,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
-        PermissionHelper.checkStoragePermissions(this,this);
         setupNavigation();
-
-        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-
-        autoCleanupSimilar = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
-        autoCleanupBlurred = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_BLURRED, false);
-
-        if (hasStoragePermission()) {
-            if (autoCleanupSimilar && autoCleanupBlurred) {
-                startAutoCleanup();
-            } else if (autoCleanupSimilar) {
-                startSimilarPhotoCleanup();
-            } else if (autoCleanupBlurred) {
-                startBlurCleanupWorker();
-            }
-        }
-    }
-
-    private boolean hasStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_MEDIA_IMAGES
-            ) == PackageManager.PERMISSION_GRANTED;
-        } else {
-            return ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED;
-        }
     }
     private void setupNavigation() {
         bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -162,81 +132,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
         bottomNavigationView.setSelectedItemId(R.id.photos);
-    }
-
-    private void startAutoCleanup(){
-        OneTimeWorkRequest autoCleanupRequest = new OneTimeWorkRequest.Builder(AutoCleanupWorker.class)
-                .build();
-
-        WorkManager.getInstance(this).enqueueUniqueWork(
-                "auto_cleanup",
-                ExistingWorkPolicy.KEEP,
-                autoCleanupRequest
-        );
-    }
-    private void startBlurCleanupWorker() {
-        OneTimeWorkRequest blurRequest =
-                new OneTimeWorkRequest.Builder(BlurCleanupWorker.class)
-                        .build();
-
-        WorkManager.getInstance(this).enqueueUniqueWork(
-                "blur_cleanup",
-                ExistingWorkPolicy.KEEP,
-                blurRequest
-        );
-    }
-    private void startSimilarPhotoCleanup() {
-
-        OneTimeWorkRequest request =
-                new OneTimeWorkRequest.Builder(SimilarCleanupWorker.class)
-                        .build();
-
-        WorkManager.getInstance(this).enqueueUniqueWork(
-                "similar_cleanup",
-                ExistingWorkPolicy.KEEP,
-                request
-        );
-
-        WorkManager.getInstance(this)
-                .getWorkInfoByIdLiveData(request.getId())
-                .observe(this, workInfo -> {
-
-                    if (workInfo == null) return;
-
-                    Log.d("AUTO_DEBUG", "Observer triggered, state: " + workInfo.getState());
-
-                    if (!workInfo.getState().isFinished()) return;
-
-                    boolean hasResult =
-                            workInfo.getOutputData().getBoolean("HAS_RESULT", false);
-
-                    if (!hasResult) return;
-
-                    ArrayList<Uri> uriList =
-                            new ArrayList<>(SimilarPhotoCache.cachedUris);
-
-                    Log.d("AUTO_DEBUG", "Opening grid with size: " + uriList.size());
-
-                    Intent intent = new Intent(this, SimilarPhotoGridActivity.class);
-                    intent.putParcelableArrayListExtra("images", uriList);
-                    intent.putExtra("from_auto_cleanup", true);
-                    startActivity(intent);
-                });
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == 1001) {
-            if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-               Toast.makeText(this, "Permission Denied. Please allow in Settings.",
-                        Toast.LENGTH_SHORT).show();
-                openAppSettings(this);
-            }
-        }
     }
 
 }
