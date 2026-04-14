@@ -47,7 +47,7 @@ public class Notification {
     public static void showAutoCleanupInfoDialog(Activity activity, int count) {
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
                 .setTitle("Information")
-                .setMessage("AutoCleanUp has identified " + count + " similar photos.")
+                .setMessage("AutoCleanUp has identified " + count + " photos.")
                 .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
                 .setCancelable(true)
                 .show();

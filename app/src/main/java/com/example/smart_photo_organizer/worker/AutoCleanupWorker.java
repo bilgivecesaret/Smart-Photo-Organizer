@@ -109,8 +109,7 @@ public class AutoCleanupWorker extends Worker {
     }
 
     private void sendNotification(Context context, int similarCount, int blurCount) {
-        NotificationManager nm =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -131,8 +130,17 @@ public class AutoCleanupWorker extends Worker {
         stackBuilder.addNextIntent(intent);
         PendingIntent pi = stackBuilder.getPendingIntent(2001, flags);
 
-        String text = similarCount + " similar, " + blurCount +
-                " blurry photos found. Tap to review.";
+        String text;
+        if(similarCount != 0 && blurCount != 0) {
+            text = similarCount + " similar, " + blurCount +
+                    " blurry photos found. Tap to review.";
+        } else if (similarCount !=0) {
+            text = similarCount + " similar, " + " photos found. Tap to review.";
+        }else if (blurCount != 0) {
+            text = blurCount + " blurry photos found. Tap to review.";
+        } else {
+            text = "No photos found.";
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)

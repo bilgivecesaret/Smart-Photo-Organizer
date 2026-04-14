@@ -72,12 +72,19 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         boolean useCache = getIntent().getBooleanExtra("use_cache", false);
         if (useCache && SimilarPhotoCache.cachedUris != null && !SimilarPhotoCache.cachedUris.isEmpty()) {
             images = new ArrayList<>(SimilarPhotoCache.cachedUris);
+            SimilarPhotoCache.cachedUris = null;
         } else {
             images = getIntent().getParcelableArrayListExtra("images");
+            SimilarPhotoCache.cachedUris = null;
         }
 
         boolean fromAuto = getIntent().getBooleanExtra("from_auto_cleanup", false);
+        if (fromAuto && images != null && !images.isEmpty()) {
+            Notification.showAutoCleanupInfoDialog(this,images.size());
+        }
+
         progressBar.setVisibility(View.GONE);
+
         if (images == null || images.isEmpty()) {
             Toast.makeText(this, "No photos were found to display.", Toast.LENGTH_SHORT).show();
             finish();
@@ -90,9 +97,6 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         recyclerView.setAdapter(adapter);
 
-        if (fromAuto && images != null && !images.isEmpty()) {
-            Notification.showAutoCleanupInfoDialog(this,images.size());
-        }
         adapter.setOnImageClickListener((uri, position) -> {
 
             Intent intent = new Intent(this, PhotoViewerActivity.class);
