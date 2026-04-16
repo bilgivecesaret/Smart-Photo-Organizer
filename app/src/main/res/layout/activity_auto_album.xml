@@ -8,8 +8,8 @@
     android:padding="16dp"
     android:background="#F5F5F5">
 
-    <!-- Butonlar (ALT ALTA) -->
     <LinearLayout
+        android:id="@+id/layoutButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -24,24 +24,49 @@
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnSortByHuman"
+            android:id="@+id/btnSortByFolder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="İnsan Olanları Sırala"
+            android:text="Klasöre Göre Grupla"
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnSortByAnimal"
+            android:id="@+id/btnSortNewest"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hayvanlara Göre Sırala"/>
+            android:text="En Yeni Fotoğraflar"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnSortOldest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="En Eski Fotoğraflar"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnFilterHuman"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="İnsan Olanları Filtrele"
+            android:layout_marginBottom="12dp"/>
+
     </LinearLayout>
 
-    <!-- RecyclerView -->
+    <TextView
+        android:id="@+id/tvLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Taranıyor..."
+        android:textSize="16sp"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAutoAlbums"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:clipToPadding="false"/>
 
 </LinearLayout>

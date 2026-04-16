@@ -53,6 +53,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
     implementation(libs.work.runtime)
+    implementation("com.google.mlkit:face-detection:16.1.5")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

@@ -3,7 +3,6 @@ package com.example.smart_photo_organizer.activity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
-import com.example.smart_photo_organizer.util.HumanDetectionUtil;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,7 +13,6 @@ import com.example.smart_photo_organizer.adapter.AutoAlbumAdapter;
 import com.example.smart_photo_organizer.model.AutoAlbum;
 import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.AutoAlbumCreator;
-import com.example.smart_photo_organizer.util.HumanDetectionUtil;
 import com.example.smart_photo_organizer.util.ImageFetcher;
 
 import java.util.ArrayList;
@@ -57,10 +55,6 @@ public class AutoAlbumDisplayActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
                 List<HashItem> filteredPhotos = new ArrayList<>(allPhotos);
-
-                if ("HUMAN".equals(sortType)) {
-                    filteredPhotos = HumanDetectionUtil.filterPhotosWithHumans(AutoAlbumDisplayActivity.this, filteredPhotos);
-                }
 
                 autoAlbums.clear();
                 autoAlbums.addAll(AutoAlbumCreator.createAutoAlbums(AutoAlbumDisplayActivity.this, filteredPhotos));

@@ -1,49 +1,41 @@
 package com.example.smart_photo_organizer.activity;
 
-import android.graphics.Bitmap;
-import android.provider.MediaStore;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.AutoAlbumAdapter;
-import com.example.smart_photo_organizer.adapter.GridImageAdapter;
 import com.example.smart_photo_organizer.model.AutoAlbum;
 import com.example.smart_photo_organizer.model.HashItem;
 import com.example.smart_photo_organizer.util.AutoAlbumCreator;
-import com.example.smart_photo_organizer.util.HumanDetectionUtil;
 import com.example.smart_photo_organizer.util.ImageFetcher;
 
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.support.common.FileUtil;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import android.util.Log;
+import java.util.Map;
 
 public class AutoAlbumActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private Button btnDateSort, btnHumanSort, btnAnimalSort;
-    private List<HashItem> allPhotos = new ArrayList<>();
-    private AutoAlbumAdapter adapter;
+    private View layoutButtons;
 
-    // Activity seviyesinde TensorFlow Lite interpreter
-    private Interpreter tflite;
+    private Button btnSortByDate;
+    private Button btnSortByFolder;
+    private Button btnSortNewest;
+    private Button btnSortOldest;
+    private Button btnFilterHuman;
+    private TextView tvLoading;
+
+    private List<HashItem> allPhotos = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,141 +43,38 @@ public class AutoAlbumActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_auto_album);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.autoAlbumActivity), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
-            return insets;
-        });
-
         recyclerView = findViewById(R.id.rvAutoAlbums);
-        btnDateSort = findViewById(R.id.btnSortByDate);
-        btnHumanSort = findViewById(R.id.btnSortByHuman);
-        btnAnimalSort = findViewById(R.id.btnSortByAnimal);
+        layoutButtons = findViewById(R.id.layoutButtons);
 
-        recyclerView.setVisibility(RecyclerView.GONE);
+        btnSortByDate   = findViewById(R.id.btnSortByDate);
+        btnSortByFolder = findViewById(R.id.btnSortByFolder);
+        btnSortNewest   = findViewById(R.id.btnSortNewest);
+        btnSortOldest   = findViewById(R.id.btnSortOldest);
+        btnFilterHuman = findViewById(R.id.btnFilterHuman);
+        tvLoading = findViewById(R.id.tvLoading);
+
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerView.setVisibility(View.GONE);
 
-        // Modeli yükle (sadece bir kez)
-        loadTFLiteModel();
-
-        // Buton tıklamaları
-        btnDateSort.setOnClickListener(v -> loadAlbumsByDate());
-        btnHumanSort.setOnClickListener(v -> loadAlbumsByHuman());
-        btnAnimalSort.setOnClickListener(v -> loadAlbumsByAnimal());
+        btnSortByDate.setOnClickListener(v -> loadAndShow(SortType.GROUP_BY_DATE));
+        btnSortByFolder.setOnClickListener(v -> loadAndShow(SortType.GROUP_BY_FOLDER));
+        btnSortNewest.setOnClickListener(v -> loadAndShow(SortType.NEWEST_FIRST));
+        btnSortOldest.setOnClickListener(v -> loadAndShow(SortType.OLDEST_FIRST));
+        btnFilterHuman.setOnClickListener(v -> loadAndShow(SortType.HUMAN_FILTER));
     }
 
-    private void loadTFLiteModel() {
-        try {
-            MappedByteBuffer model = FileUtil.loadMappedFile(this, "ml/detect.tflite");
-            tflite = new Interpreter(model);
-            Log.d("TFLite", "Model başarıyla yüklendi.");
-        } catch (Exception e) {
-            Log.e("AnimalDetection", "Model yüklenirken hata oluştu", e);
-            Toast.makeText(this, "Hayvan modeli yüklenemedi.", Toast.LENGTH_SHORT).show();
-        }
+    // ─── Sort tipleri ────────────────────────────────────────────────
+    private enum SortType {
+        GROUP_BY_DATE,
+        GROUP_BY_FOLDER,
+        NEWEST_FIRST,
+        OLDEST_FIRST,
+        HUMAN_FILTER
     }
 
-    private void loadAlbumsByDate() {
-        loadAllPhotos(() -> {
-            List<AutoAlbum> albums = AutoAlbumCreator.createAutoAlbums(this, allPhotos);
-            displayAlbums(albums);
-        });
-    }
-
-    private void loadAlbumsByHuman() {
-        loadAllPhotos(() -> {
-            List<HashItem> humanPhotos = HumanDetectionUtil.filterPhotosWithHumans(this, allPhotos);
-
-            if (humanPhotos.isEmpty()) {
-                Toast.makeText(this, "İnsan içeren fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            GridImageAdapter gridAdapter = new GridImageAdapter(this, humanPhotos);
-            recyclerView.setAdapter(gridAdapter);
-
-            btnDateSort.setVisibility(Button.GONE);
-            btnHumanSort.setVisibility(Button.GONE);
-            btnAnimalSort.setVisibility(Button.GONE);
-
-            recyclerView.setVisibility(RecyclerView.VISIBLE);
-        });
-    }
-
-    private void loadAlbumsByAnimal() {
-        loadAllPhotos(() -> {
-            if (allPhotos.isEmpty()) {
-                Toast.makeText(this, "Analiz edilecek fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            new Thread(() -> {
-                List<HashItem> animalPhotos = new ArrayList<>();
-                AutoAlbumActivity activity = AutoAlbumActivity.this;
-
-                try {
-                    int[] inputShape = tflite.getInputTensor(0).shape();
-                    int inputHeight = inputShape[1];
-                    int inputWidth = inputShape[2];
-                    int inputChannels = inputShape[3];
-
-                    for (HashItem item : allPhotos) {
-                        Bitmap bitmap;
-                        try {
-                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), item.uri);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            continue;
-                        }
-
-                        bitmap = Bitmap.createScaledBitmap(bitmap, inputWidth, inputHeight, true);
-                        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(4 * inputHeight * inputWidth * inputChannels);
-                        inputBuffer.order(ByteOrder.nativeOrder());
-
-                        int[] intValues = new int[inputHeight * inputWidth];
-                        bitmap.getPixels(intValues, 0, inputWidth, 0, 0, inputWidth, inputHeight);
-                        for (int pixel : intValues) {
-                            inputBuffer.putFloat(((pixel >> 16) & 0xFF) / 255.0f);
-                            inputBuffer.putFloat(((pixel >> 8) & 0xFF) / 255.0f);
-                            inputBuffer.putFloat((pixel & 0xFF) / 255.0f);
-                        }
-
-                        float[][] output = new float[1][1]; // Tek çıktı: hayvan olasılığı
-                        tflite.run(inputBuffer, output);
-
-                        if (output[0][0] > 0.5f) {
-                            animalPhotos.add(item);
-                        }
-                    }
-
-                } catch (Exception e) {
-                    Log.e("AnimalDetection", "Hayvan tespiti sırasında hata: ", e);
-                    runOnUiThread(() ->
-                            Toast.makeText(activity, "Hayvan tespiti sırasında hata oluştu.", Toast.LENGTH_SHORT).show()
-                    );
-                }
-
-                runOnUiThread(() -> {
-                    if (animalPhotos.isEmpty()) {
-                        Toast.makeText(activity, "Hayvan içeren fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    GridImageAdapter gridAdapter = new GridImageAdapter(activity, animalPhotos);
-                    recyclerView.setAdapter(gridAdapter);
-
-                    btnDateSort.setVisibility(View.GONE);
-                    btnHumanSort.setVisibility(View.GONE);
-                    btnAnimalSort.setVisibility(View.GONE);
-
-                    recyclerView.setVisibility(RecyclerView.VISIBLE);
-                });
-            }).start();
-        });
-    }
-
-    private void loadAllPhotos(Runnable onComplete) {
-        allPhotos.clear();
+    // ─── Ana yükleme metodu ───────────────────────────────────────────
+    private void loadAndShow(SortType type) {
+        allPhotos = new ArrayList<>();
 
         ImageFetcher.loadAllImagesAsync(this, 20, new ImageFetcher.ImageBatchCallback() {
             @Override
@@ -195,30 +84,73 @@ public class AutoAlbumActivity extends AppCompatActivity {
 
             @Override
             public void onComplete() {
-                runOnUiThread(() -> {
-                    if (allPhotos.isEmpty()) {
-                        Toast.makeText(AutoAlbumActivity.this, "Analiz edilecek fotoğraf bulunamadı.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    onComplete.run();
-                });
+                runOnUiThread(() -> processAndShow(type));
             }
         });
     }
 
-    private void displayAlbums(List<AutoAlbum> albums) {
-        if (albums == null || albums.isEmpty()) {
-            Toast.makeText(this, "Albüm oluşturmak için yeterli veri yok.", Toast.LENGTH_SHORT).show();
-            return;
+    // ─── Sıralama / gruplama ──────────────────────────────────────────
+    private void processAndShow(SortType type) {
+        List<AutoAlbum> albums = new ArrayList<>();
+
+        switch (type) {
+            case HUMAN_FILTER:
+                new com.example.smart_photo_organizer.util.HumanFilter()
+                        .filter(this, allPhotos, result -> {
+                            List<AutoAlbum> humanAlbums = new ArrayList<>();
+                            humanAlbums.add(new AutoAlbum("İnsan İçerikli Fotoğraflar", result));
+                            runOnUiThread(() -> {
+                                recyclerView.setAdapter(new AutoAlbumAdapter(this, humanAlbums));
+                                layoutButtons.setVisibility(View.GONE);
+                                recyclerView.setVisibility(View.VISIBLE);
+                            });
+                        });
+                return;
+
+            case GROUP_BY_DATE:
+                albums = AutoAlbumCreator.createAutoAlbums(this, allPhotos);
+                break;
+
+            case GROUP_BY_FOLDER:
+                albums = groupByFolder(allPhotos);
+                break;
+
+            case NEWEST_FIRST:
+                List<HashItem> newest = new ArrayList<>(allPhotos);
+                Collections.sort(newest, (a, b) -> Long.compare(b.timestamp, a.timestamp));
+                List<HashItem> newestLimited = newest.subList(0, Math.min(30, newest.size()));
+                albums.add(new AutoAlbum("En Yeni Fotoğraflar", newestLimited));
+                break;
+
+            case OLDEST_FIRST:
+                List<HashItem> oldest = new ArrayList<>(allPhotos);
+                Collections.sort(oldest, (a, b) -> Long.compare(a.timestamp, b.timestamp));
+                List<HashItem> oldestLimited = oldest.subList(0, Math.min(30, oldest.size()));
+                albums.add(new AutoAlbum("En Eski Fotoğraflar", oldestLimited));
+                break;
         }
 
-        adapter = new AutoAlbumAdapter(this, albums);
-        recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(new AutoAlbumAdapter(this, albums));
+        layoutButtons.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+    }
 
-        btnDateSort.setVisibility(Button.GONE);
-        btnHumanSort.setVisibility(Button.GONE);
-        btnAnimalSort.setVisibility(Button.GONE);
+    // ─── Klasöre göre gruplama ────────────────────────────────────────
+    private List<AutoAlbum> groupByFolder(List<HashItem> photos) {
+        Map<String, List<HashItem>> map = new LinkedHashMap<>();
 
-        recyclerView.setVisibility(RecyclerView.VISIBLE);
+        for (HashItem item : photos) {
+            String folder = item.bucketName != null ? item.bucketName : "Diğer";
+            if (!map.containsKey(folder)) {
+                map.put(folder, new ArrayList<>());
+            }
+            map.get(folder).add(item);
+        }
+
+        List<AutoAlbum> result = new ArrayList<>();
+        for (Map.Entry<String, List<HashItem>> entry : map.entrySet()) {
+            result.add(new AutoAlbum(entry.getKey(), entry.getValue()));
+        }
+        return result;
     }
 }
