@@ -36,20 +36,14 @@ public class ImageFetcher {
             List<HashItem> batch = new ArrayList<>();
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
-            // ===== IMAGES (Galeri Fotoğrafları) =====
             Uri imagesUri;
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                imagesUri = MediaStore.Images.Media.getContentUri(
-                        MediaStore.VOLUME_EXTERNAL
-                );
+                imagesUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
             } else {
                 imagesUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             }
 
-
             String[] projection = getProjection();
-
 
             try (Cursor cursor = context.getContentResolver().query(
                     imagesUri,
@@ -58,7 +52,6 @@ public class ImageFetcher {
                     new String[]{"image/%"},
                     MediaStore.Images.Media.DATE_ADDED + " DESC"
             )) {
-
                 if (cursor != null) {
                     int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                     int bucketCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
@@ -67,19 +60,19 @@ public class ImageFetcher {
                                     ? MediaStore.MediaColumns.RELATIVE_PATH
                                     : MediaStore.Images.Media.DATA
                     );
-
                     int dateCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                     int latCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.LATITUDE);
                     int lonCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.LONGITUDE);
+                    int displayNameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
 
                     while (cursor.moveToNext()) {
                         long id = cursor.getLong(idCol);
                         Uri uri = ContentUris.withAppendedId(imagesUri, id);
 
-                        // Saniyeye çeviriyoruz (Algoritma saniye bekler)
                         long dateTaken = cursor.getLong(dateCol) / 1000;
                         double lat = cursor.getDouble(latCol);
                         double lon = cursor.getDouble(lonCol);
+                        String displayName = cursor.getString(displayNameCol);
 
                         if (!addedUris.add(uri.toString())) continue;
 
@@ -88,13 +81,17 @@ public class ImageFetcher {
                                         ? cursor.getString(pathCol)
                                         : new File(cursor.getString(pathCol)).getParent();
 
+                        String bucketName = resolveFolderName(cursor.getString(bucketCol), folder);
+                        boolean isFrontCamera = detectFrontCamera(bucketName, displayName);
+
                         batch.add(new HashItem(
                                 null,
                                 uri,
-                                resolveFolderName(cursor.getString(bucketCol), folder),
+                                bucketName,
                                 dateTaken,
                                 lat,
-                                lon
+                                lon,
+                                isFrontCamera
                         ));
 
                         if (batch.size() >= batchSize) {
@@ -106,7 +103,7 @@ public class ImageFetcher {
                 }
             } catch (Exception e) { e.printStackTrace(); }
 
-            // ===== DOWNLOADS (İndirilenler Klasörü) =====
+            // DOWNLOADS
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 Uri downloadUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
 
@@ -114,7 +111,7 @@ public class ImageFetcher {
                         MediaStore.Downloads._ID,
                         MediaStore.Downloads.DISPLAY_NAME,
                         MediaStore.Downloads.RELATIVE_PATH,
-                        MediaStore.Downloads.DATE_ADDED // İndirilenlerde genelde DATE_TAKEN olmaz, DATE_ADDED kullanılır
+                        MediaStore.Downloads.DATE_ADDED
                 };
 
                 try (Cursor cursor = context.getContentResolver().query(
@@ -124,7 +121,6 @@ public class ImageFetcher {
                         null,
                         MediaStore.Downloads.DATE_ADDED + " DESC"
                 )) {
-
                     if (cursor != null) {
                         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID);
                         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DISPLAY_NAME);
@@ -136,12 +132,11 @@ public class ImageFetcher {
                             if (name == null) continue;
 
                             String lower = name.toLowerCase();
-                            if (!(lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp"))) continue;
+                            if (!(lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+                                    || lower.endsWith(".png") || lower.endsWith(".webp"))) continue;
 
                             long id = cursor.getLong(idCol);
                             Uri uri = ContentUris.withAppendedId(downloadUri, id);
-
-                            // İndirilen fotoğrafların tarihi (Saniye cinsinden)
                             long dateAdded = cursor.getLong(dateCol);
 
                             if (!addedUris.add(uri.toString())) continue;
@@ -151,8 +146,9 @@ public class ImageFetcher {
                                     uri,
                                     resolveFolderName("Download", cursor.getString(pathCol)),
                                     dateAdded,
-                                    0.0, // İndirilenlerde genelde GPS verisi olmaz
-                                    0.0
+                                    0.0,
+                                    0.0,
+                                    false
                             ));
 
                             if (batch.size() >= batchSize) {
@@ -172,29 +168,36 @@ public class ImageFetcher {
         });
     }
 
-    private static String[] getProjection() {
-        String[] projection;
+    private static boolean detectFrontCamera(String bucketName, String displayName) {
+        String bucket = bucketName != null ? bucketName.toLowerCase() : "";
+        String name = displayName != null ? displayName.toLowerCase() : "";
 
+        return bucket.contains("selfie") || bucket.contains("front")
+                || name.contains("selfie") || name.contains("front");
+    }
+
+    private static String[] getProjection() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            projection = new String[]{
+            return new String[]{
                     MediaStore.Images.Media._ID,
                     MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
                     MediaStore.MediaColumns.RELATIVE_PATH,
                     MediaStore.Images.Media.DATE_TAKEN,
                     MediaStore.Images.Media.LATITUDE,
-                    MediaStore.Images.Media.LONGITUDE
+                    MediaStore.Images.Media.LONGITUDE,
+                    MediaStore.Images.Media.DISPLAY_NAME
             };
         } else {
-            projection = new String[]{
+            return new String[]{
                     MediaStore.Images.Media._ID,
                     MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-                    MediaStore.Images.Media.DATA, // 👈 API 27 için
+                    MediaStore.Images.Media.DATA,
                     MediaStore.Images.Media.DATE_TAKEN,
                     MediaStore.Images.Media.LATITUDE,
-                    MediaStore.Images.Media.LONGITUDE
+                    MediaStore.Images.Media.LONGITUDE,
+                    MediaStore.Images.Media.DISPLAY_NAME
             };
         }
-        return projection;
     }
 
     private static String resolveFolderName(String bucket, String relativePath) {

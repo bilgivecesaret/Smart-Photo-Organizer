@@ -24,43 +24,52 @@
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnSortByFolder"
+            android:id="@+id/btnFilterNature"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Klasöre Göre Grupla"
+            android:text="🌿 Doğa Fotoğrafları"
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnSortNewest"
+            android:id="@+id/btnFilterFood"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="En Yeni Fotoğraflar"
+            android:text="🍎 Yiyecek Fotoğrafları"
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnSortOldest"
+            android:id="@+id/btnFilterAnimal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="En Eski Fotoğraflar"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnFilterHuman"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="İnsan Olanları Filtrele"
+            android:text="🐾 Hayvan Fotoğrafları"
             android:layout_marginBottom="12dp"/>
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tvLoading"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/layoutLoading"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Taranıyor..."
-        android:textSize="16sp"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginTop="32dp">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminate="true"/>
+
+        <TextView
+            android:id="@+id/tvLoading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fotoğraflar Tespit Ediliyor..."
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAutoAlbums"
