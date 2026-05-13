@@ -41,7 +41,21 @@
             android:id="@+id/btnFilterAnimal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🐾 Hayvan Fotoğrafları"
+            android:text="⚽ Spor Fotoğrafları"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnFilterVehicle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🚗 Araçlar"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnFilterTech"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💻 Teknoloji"
             android:layout_marginBottom="12dp"/>
 
     </LinearLayout>
