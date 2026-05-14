@@ -7,6 +7,9 @@ import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -86,6 +89,11 @@ public class AutoAlbumActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_auto_album);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.autoAlbumActivity), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right,0);
+            return insets;
+        });
 
         recyclerView       = findViewById(R.id.rvAutoAlbums);
         layoutButtons      = findViewById(R.id.layoutButtons);
@@ -94,7 +102,7 @@ public class AutoAlbumActivity extends AppCompatActivity {
         btnSortByDate      = findViewById(R.id.btnSortByDate);
         btnFilterNature    = findViewById(R.id.btnFilterNature);
         btnFilterFood      = findViewById(R.id.btnFilterFood);
-        btnFilterSport     = findViewById(R.id.btnFilterAnimal);
+        btnFilterSport     = findViewById(R.id.btnFilterSport);
         btnFilterVehicle   = findViewById(R.id.btnFilterVehicle);
         btnFilterTech      = findViewById(R.id.btnFilterTech);
 
@@ -140,23 +148,23 @@ public class AutoAlbumActivity extends AppCompatActivity {
         switch (type) {
             case NATURE_FILTER:
                 keywords = NATURE_KEYWORDS;
-                albumTitle = "🌿 Doğa Fotoğrafları";
+                albumTitle = getString(R.string.albumTitleNature);
                 break;
             case FOOD_FILTER:
                 keywords = FOOD_KEYWORDS;
-                albumTitle = "🍎 Yiyecek Fotoğrafları";
+                albumTitle = getString(R.string.albumTitleFood);
                 break;
             case SPORT_FILTER:
                 keywords = SPORT_KEYWORDS;
-                albumTitle = "⚽ Spor Fotoğrafları";
+                albumTitle = getString(R.string.albumTitleSport);
                 break;
             case VEHICLE_FILTER:
                 keywords = VEHICLE_KEYWORDS;
-                albumTitle = "🚗 Araçlar";
+                albumTitle = getString(R.string.albumTitleVehicle);
                 break;
             default:
                 keywords = TECH_KEYWORDS;
-                albumTitle = "💻 Teknoloji";
+                albumTitle = getString(R.string.albumTitleTech);
                 break;
         }
 

@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import com.example.smart_photo_organizer.R;
+
 import java.util.List;
 
 public class Notification {
@@ -32,21 +34,25 @@ public class Notification {
         return new java.text.DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
-    public static void showSuccessDialog(Activity activity, String savedSpace) {
+    public static void showSuccessDialog(Activity activity, String savedSpace, Runnable onDismiss) {
         if (activity == null) return;
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
-                .setTitle("Cleaning is complete!")
-                .setMessage(savedSpace + " space was successfully freed up.")
+                .setTitle(activity.getString(R.string.clnComplete))
+                .setMessage(savedSpace + " " + activity.getString(R.string.freedUp))
                 .setPositiveButton("OK", (dialog, which) -> {
                     dialog.dismiss();
+                    if (onDismiss != null) onDismiss.run();
                 })
                 .setCancelable(false)
                 .show();
     }
+    public static void showSuccessDialog(Activity activity, String savedSpace) {
+        showSuccessDialog(activity, savedSpace, null);
+    }
 
     public static void showAutoCleanupInfoDialog(Activity activity, int count) {
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
-                .setTitle("Information")
+                .setTitle(activity.getString(R.string.info))
                 .setMessage("AutoCleanUp has identified " + count + " photos.")
                 .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
                 .setCancelable(true)

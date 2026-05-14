@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
 import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 import com.example.smart_photo_organizer.util.BlurDetector;
+import com.example.smart_photo_organizer.util.Notification;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -47,6 +48,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
     private LinearLayout topBar;
     private CheckBox cbSelectAll;
     private Button btnDelete, btnCancel;
+    private long lastDeletedSize = 0;
 
     private SimilarGridAdapter adapter;
     private final List<Uri> blurredUris = Collections.synchronizedList(new ArrayList<>());
@@ -66,8 +68,14 @@ public class BlurredPhotoActivity extends AppCompatActivity {
                     result -> {
                         if (result.getResultCode() == RESULT_OK) {
                             adapter.removeSelectedImages();
-                            updateUI(0);
-                            Toast.makeText(this, "Photos deleted", Toast.LENGTH_SHORT).show();
+                            Notification.showSuccessDialog(
+                                    this,
+                                    Notification.formatSize(lastDeletedSize),
+                                    () -> {
+                                        setResult(RESULT_OK);
+                                        finish();
+                                    }
+                            );
                         }
                     });
 
@@ -234,7 +242,7 @@ public class BlurredPhotoActivity extends AppCompatActivity {
         if (count > 0) {
             btnCancel.setVisibility(View.VISIBLE);
             btnDelete.setVisibility(View.VISIBLE);
-            btnDelete.setText("Delete (" + count + ")");
+            btnDelete.setText(getString(R.string.delete) + " (" + count + ")");
         } else {
             btnCancel.setVisibility(View.GONE);
             btnDelete.setVisibility(View.GONE);
@@ -249,29 +257,34 @@ public class BlurredPhotoActivity extends AppCompatActivity {
     }
 
     private void deleteSelectedPhotos() {
-        ArrayList<Uri> selected = new ArrayList<>(adapter.getSelectedImages());
+        List<Uri> selected = adapter.getSelectedImages();
         if (selected.isEmpty()) return;
+        lastDeletedSize = Notification.calculateTotalSize(getBaseContext(),selected);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {
-                PendingIntent pi = MediaStore.createDeleteRequest(getContentResolver(), selected);
+                // Android 11+ güvenli silme
+                PendingIntent pi = android.provider.MediaStore.createDeleteRequest(getContentResolver(), selected);
                 deleteLauncher.launch(new IntentSenderRequest.Builder(pi.getIntentSender()).build());
             } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "The deletion request could not be started", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Cannot start delete request", Toast.LENGTH_SHORT).show();
             }
-        }
-        else {
+        } else {
+            // Android 10 ve altı
             for (Uri uri : selected) {
                 try {
                     getContentResolver().delete(uri, null, null);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (SecurityException e) {
+                    Toast.makeText(this, "Cannot delete: " + uri.toString(), Toast.LENGTH_SHORT).show();
                 }
             }
+            Notification.showSuccessDialog(this,Notification.formatSize(lastDeletedSize));
             adapter.removeSelectedImages();
-            updateUI(0); // UI'ı sıfırla
-            Toast.makeText(this, "Photos have been deleted", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Photos deleted", Toast.LENGTH_SHORT).show();
+            Intent result = new Intent();
+            result.putExtra("photos_deleted", true);
+            setResult(RESULT_OK, result);
+            finish();
         }
     }
 }

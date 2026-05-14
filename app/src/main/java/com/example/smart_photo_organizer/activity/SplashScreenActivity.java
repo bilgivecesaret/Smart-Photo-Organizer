@@ -58,37 +58,34 @@ public class SplashScreenActivity extends AppCompatActivity {
             return insets;
         });
 
-        PermissionHelper.checkStoragePermissions(this,this);
-
         autoCleanupSimilar = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_SIMILAR,false);
         autoCleanupBlurred = prefs.getBoolean(SettingsFragment.KEY_AUTO_CLEANUP_BLURRED, false);
 
+        if (hasStoragePermission()) {
+            onPermissionGranted();
+        } else {
+            PermissionHelper.checkStoragePermissions(this, this);
+        }
+    }
+    private void onPermissionGranted() {
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        executor.execute(() -> {
-            // MediaStore refresh
-            FullMediaScan.rescanAllPublicMedia(this);
-        });
+        executor.execute(() -> FullMediaScan.rescanAllPublicMedia(this));
 
         executor.execute(() -> {
-            if (hasStoragePermission()) {
-                if (autoCleanupSimilar && autoCleanupBlurred) {
-                    startAutoCleanup();
-                } else if (autoCleanupSimilar) {
-                    startSimilarPhotoCleanup();
-                } else if (autoCleanupBlurred) {
-                    startBlurCleanupWorker();
-                }
+            if (autoCleanupSimilar && autoCleanupBlurred) {
+                startAutoCleanup();
+            } else if (autoCleanupSimilar) {
+                startSimilarPhotoCleanup();
+            } else if (autoCleanupBlurred) {
+                startBlurCleanupWorker();
             }
         });
 
-        executor.execute(() -> {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
-            }, 1000);
-        });
-
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }, 1000);
     }
     private boolean hasStoragePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -145,10 +142,15 @@ public class SplashScreenActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == 1001) {
-            if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission Denied. Please allow in Settings.",
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onPermissionGranted();
+            } else {
+                Toast.makeText(this,
+                        getString(R.string.permissionDenied),
                         Toast.LENGTH_SHORT).show();
                 openAppSettings(this);
+                finish();
             }
         }
     }

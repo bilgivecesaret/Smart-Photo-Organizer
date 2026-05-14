@@ -1,5 +1,7 @@
 package com.example.smart_photo_organizer.activity;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.database.Cursor;
@@ -43,13 +45,19 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
     private long lastDeletedSize = 0;
 
     private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    Notification.showSuccessDialog(this,Notification.formatSize(lastDeletedSize));
-                    adapter.removeSelectedImages();
-                    setResult(RESULT_OK);
-                    finish();
-                }
+            registerForActivityResult(
+                    new ActivityResultContracts.StartIntentSenderForResult(), result -> {
+                        if (result.getResultCode() == RESULT_OK) {
+                            adapter.removeSelectedImages();
+                            Notification.showSuccessDialog(
+                                    this,
+                                    Notification.formatSize(lastDeletedSize),
+                                    () -> {
+                                        setResult(RESULT_OK);
+                                        finish();
+                                    }
+                            );
+                        }
             });
 
     @Override
@@ -119,7 +127,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
             if (count > 0) {
                 cancel.setVisibility(View.VISIBLE);
                 delete.setVisibility(View.VISIBLE);
-                delete.setText("Delete (" + count + ")");
+                delete.setText(getString(R.string.delete) + " (" + count + ")");
             } else {
                 cancel.setVisibility(View.GONE);
                 delete.setVisibility(View.GONE);
@@ -133,7 +141,7 @@ public class SimilarPhotoGridActivity extends AppCompatActivity {
         delete.setOnClickListener(v -> {
             List<Uri> selected = adapter.getSelectedImages();
             if (selected.isEmpty()) return;
-            lastDeletedSize = Notification.calculateTotalSize(this,selected);
+            lastDeletedSize = Notification.calculateTotalSize(getBaseContext(),selected);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 try {

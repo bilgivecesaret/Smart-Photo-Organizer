@@ -24,9 +24,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.smart_photo_organizer.R;
-import com.example.smart_photo_organizer.adapter.ImageGridAdapter;
 import com.example.smart_photo_organizer.adapter.SimilarGridAdapter;
 import com.example.smart_photo_organizer.model.HashItem;
+import com.example.smart_photo_organizer.util.Notification;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,9 +43,15 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
     private final ActivityResultLauncher<IntentSenderRequest> deleteLauncher =
             registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK) {
-                    showSuccessDialog(formatSize(lastDeletedSize));
                     adapter.removeSelectedImages();
-                    setResult(RESULT_OK);
+                    Notification.showSuccessDialog(
+                            this,
+                            Notification.formatSize(lastDeletedSize),
+                            () -> {
+                                setResult(RESULT_OK);
+                                finish();
+                            }
+                    );
                 }
             });
     @Override
@@ -105,34 +112,33 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
         delete.setOnClickListener(v -> {
 
             List<Uri> selected = adapter.getSelectedImages();
-
             if (selected.isEmpty()) return;
-
-            lastDeletedSize = calculateTotalSize(selected);
+            lastDeletedSize = Notification.calculateTotalSize(getBaseContext(),selected);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-
                 try {
-
-                    PendingIntent pi =
-                            MediaStore.createDeleteRequest(getContentResolver(), selected);
-
-                    deleteLauncher.launch(
-                            new IntentSenderRequest.Builder(pi.getIntentSender()).build()
-                    );
-
+                    // Android 11+ güvenli silme
+                    PendingIntent pi = android.provider.MediaStore.createDeleteRequest(getContentResolver(), selected);
+                    deleteLauncher.launch(new IntentSenderRequest.Builder(pi.getIntentSender()).build());
                 } catch (Exception e) {
-                    Toast.makeText(this, "Delete request failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Cannot start delete request", Toast.LENGTH_SHORT).show();
                 }
-
             } else {
-
+                // Android 10 ve altı
                 for (Uri uri : selected) {
-                    getContentResolver().delete(uri, null, null);
+                    try {
+                        getContentResolver().delete(uri, null, null);
+                    } catch (SecurityException e) {
+                        Toast.makeText(this, "Cannot delete: " + uri.toString(), Toast.LENGTH_SHORT).show();
+                    }
                 }
-
-                showSuccessDialog(formatSize(lastDeletedSize));
+                Notification.showSuccessDialog(this,Notification.formatSize(lastDeletedSize));
                 adapter.removeSelectedImages();
+                Toast.makeText(this, "Photos deleted", Toast.LENGTH_SHORT).show();
+                Intent result = new Intent();
+                result.putExtra("photos_deleted", true);
+                setResult(RESULT_OK, result);
+                finish();
             }
         });
 
@@ -154,7 +160,7 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
             delete.setVisibility(View.VISIBLE);
             cancel.setVisibility(View.VISIBLE);
 
-            delete.setText("Delete (" + count + ")");
+            delete.setText(getString(R.string.delete) + " (" + count + ")");
 
         } else {
 
@@ -169,44 +175,6 @@ public class AutoAlbumDetailActivity extends AppCompatActivity {
         selectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
             adapter.selectAll(isChecked);
         });
-    }
-
-    private long calculateTotalSize(List<Uri> uris) {
-        long totalSize = 0;
-        for (Uri uri : uris) {
-            try (Cursor cursor = getContentResolver().query(uri,
-                    new String[]{MediaStore.Images.Media.SIZE}, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    totalSize += cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return totalSize;
-    }
-
-    // Boyutu okunabilir hale getirmek için (MB/KB)
-    private String formatSize(long size) {
-        if (size <= 0) return "0 B";
-        final String[] units = new String[]{"B", "KB", "MB", "GB"};
-        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-        return new java.text.DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-    }
-
-    private void showSuccessDialog(String savedSpace) {
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle("Temizlik Tamamlandı!")
-                .setMessage("Başarıyla " + savedSpace + " kadar alan boşaltıldı.")
-                .setPositiveButton("Harika", (dialog, which) -> {
-                    dialog.dismiss();
-                    Intent result = new Intent();
-                    result.putExtra("photos_deleted", true);
-                    setResult(RESULT_OK, result);
-                    finish();
-                })
-                .setCancelable(false)
-                .show();
     }
 
     public void showFullscreenContainer() {

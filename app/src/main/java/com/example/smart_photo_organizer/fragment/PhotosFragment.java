@@ -47,12 +47,13 @@ public class PhotosFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == 100 && resultCode == -1) {
-            Notification.showSuccessDialog(this.requireActivity(),Notification.formatSize(lastDeletedSize));
             adapter.removeSelectedImages();
+            Notification.showSuccessDialog(
+                    this.requireActivity(),
+                    Notification.formatSize(lastDeletedSize)
+            );
         }
     }
 
@@ -96,7 +97,6 @@ public class PhotosFragment extends Fragment {
         cancel.setOnClickListener(v -> {
 
             adapter.clearSelection();
-
             delete.setVisibility(View.GONE);
             cancel.setVisibility(View.GONE);
 
@@ -150,7 +150,7 @@ public class PhotosFragment extends Fragment {
             topBar.setVisibility(View.VISIBLE);
             delete.setVisibility(View.VISIBLE);
             cancel.setVisibility(View.VISIBLE);
-            delete.setText("Delete (" + count + ")");
+            delete.setText(getString(R.string.delete) + " (" + count + ")");
         } else {
             topBar.setVisibility(View.GONE);
             delete.setVisibility(View.GONE);
@@ -158,9 +158,7 @@ public class PhotosFragment extends Fragment {
         }
 
         selectAll.setOnCheckedChangeListener(null);
-
         selectAll.setChecked(count == adapter.getItemCount());
-
         selectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
             adapter.selectAll(isChecked);
         });

@@ -26,5 +26,20 @@
     <string name="folder2">Blurred Photos</string>
     <string name="folder3">Create Auto Albums</string>
     <string name="similar_album">Similar</string>
+    <string name="albumTitleDate">Sort by Date</string>
+    <string name="albumTitleNature">🌿 Nature Photographs</string>
+    <string name="albumTitleFood">🍎 Food Photos</string>
+    <string name="albumTitleVehicle">"🚗 Vehicles"</string>">
+    <string name="albumTitleTech">💻 Technology</string>
+    <string name="albumTitleSport">⚽ Sport Photos</string>
+    <string name="photo">Photos</string>
+    <string name="info_loading">Photographs are being identified...</string>
+    <string name="permissionDenied">Permission Denied. Please allow in Settings.</string>
+    <string name="selectAll">Select All</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="clnComplete">Cleaning is complete!</string>
+    <string name="freedUp">space was successfully freed up</string>
+    <string name="info">Information</string>
 </resources>
 

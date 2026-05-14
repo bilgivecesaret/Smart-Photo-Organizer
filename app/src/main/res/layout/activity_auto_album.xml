@@ -20,42 +20,42 @@
             android:id="@+id/btnSortByDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tarihe Göre Sırala"
+            android:text="@string/albumTitleDate"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnFilterNature"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🌿 Doğa Fotoğrafları"
+            android:text="@string/albumTitleNature"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnFilterFood"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🍎 Yiyecek Fotoğrafları"
+            android:text="@string/albumTitleFood"
             android:layout_marginBottom="12dp"/>
 
         <Button
-            android:id="@+id/btnFilterAnimal"
+            android:id="@+id/btnFilterSport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⚽ Spor Fotoğrafları"
+            android:text="@string/albumTitleSport"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnFilterVehicle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🚗 Araçlar"
+            android:text="@string/albumTitleVehicle"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnFilterTech"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💻 Teknoloji"
+            android:text="@string/albumTitleTech"
             android:layout_marginBottom="12dp"/>
 
     </LinearLayout>
@@ -79,7 +79,7 @@
             android:id="@+id/tvLoading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fotoğraflar Tespit Ediliyor..."
+            android:text="@string/info_loading"
             android:textSize="14sp"
             android:layout_marginTop="8dp"/>
 

@@ -43,7 +43,7 @@ public class AutoAlbumAdapter extends RecyclerView.Adapter<AutoAlbumAdapter.View
         AutoAlbum album = albumList.get(position);
 
         holder.tvTitle.setText(album.title);
-        holder.tvCount.setText(album.photos.size() + " Fotoğraf");
+        holder.tvCount.setText(album.photos.size() + " " + context.getString(R.string.photo));
 
         if (!album.photos.isEmpty()) {
             Glide.with(context)

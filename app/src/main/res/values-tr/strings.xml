@@ -27,4 +27,19 @@
     <string name="folder2">Bulanık Fotoğraflar</string>
     <string name="folder3">Oto Albüm Oluşturucu</string>
     <string name="similar_album">Benzer</string>
+    <string name="albumTitleSport">⚽ Spor Fotoğrafları</string>
+    <string name="albumTitleVehicle">🚗 Araçlar</string>
+    <string name="albumTitleTech">💻 Teknoloji</string>
+    <string name="photo">Fotoğraf</string>
+    <string name="albumTitleDate">Tarihe Göre Sırala</string>
+    <string name="info_loading">Fotoğraflar Tespit Ediliyor...</string>
+    <string name="albumTitleNature">🌿 Doğa Fotoğrafları</string>
+    <string name="albumTitleFood">🍎 Yiyecek Fotoğrafları</string>
+    <string name="permissionDenied">Erişim engellendi. Lütfen Ayarlar\'dan izin verin.</string>
+    <string name="selectAll">Hepsini Seç</string>
+    <string name="cancel">Vazgeç</string>
+    <string name="delete">Sil</string>
+    <string name="clnComplete">Temizlik tamamlandı!</string>
+    <string name="freedUp">alan başarıyla boşaltıldı.</string>
+    <string name="info">Bilgi</string>
 </resources>
