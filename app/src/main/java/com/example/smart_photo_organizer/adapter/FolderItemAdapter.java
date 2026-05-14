@@ -61,7 +61,7 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FolderItem item = folderList.get(position);
         holder.txtFolderName.setText(item.getFolderName());
-        holder.tvPhotoCount.setText(item.getImageUris().size() + " photos");
+        holder.tvPhotoCount.setText(item.getImageUris().size() + " " + context.getString(R.string.photo));
 
         boolean isSelected = selectedPositions.contains(position);
 
@@ -71,7 +71,6 @@ public class FolderItemAdapter extends RecyclerView.Adapter<FolderItemAdapter.Vi
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .into(holder.imgPreview);
 
-        // Sadece seçili olanlarda değil, seçim modundaysak hepsinde checkbox gösterilebilir
         holder.selectionOverlay.setVisibility(isSelected ? View.VISIBLE : View.GONE);
         holder.cbFolderSelect.setVisibility(isSelected ? View.VISIBLE : View.GONE);
 

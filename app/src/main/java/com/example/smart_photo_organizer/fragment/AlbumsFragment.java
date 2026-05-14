@@ -116,7 +116,7 @@ public class AlbumsFragment extends Fragment {
         adapter.setSelectionListener(count -> {
             if (count > 0) {
                 topBar.setVisibility(View.VISIBLE);
-                btnDelete.setText("Delete (" + count + ")");
+                btnDelete.setText(getString(R.string.delete) + " (" + count + ")");
                 btnDelete.setVisibility(View.VISIBLE);
                 btnCancel.setVisibility(View.VISIBLE);
             } else {

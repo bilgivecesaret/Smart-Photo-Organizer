@@ -1,16 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_image_grid"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="6dp">
+    android:layout_height="match_parent">
+
+    <!-- Seçim Barı -->
+    <LinearLayout
+        android:id="@+id/topBarGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="@color/soft_yellow"
+        android:gravity="center_vertical"
+        android:elevation="4dp"
+        android:visibility="gone">
+
+        <CheckBox
+            android:id="@+id/cbSelectAllGrid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/selectAll"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btnCancelGrid"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel" />
+
+        <Button
+            android:id="@+id/btnDeleteGrid"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:textColor="#FF5252" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerImages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/topBarGrid"
         android:padding="4dp"
         android:clipToPadding="false" />
 
-</LinearLayout>
+</RelativeLayout>
