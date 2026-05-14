@@ -43,6 +43,9 @@ public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHold
         String item = folderList.get(position);
 
         holder.txtFolderName.setText(item);
+        holder.tvPhotoCount.setVisibility(View.GONE);
+        holder.selectionOverlay.setVisibility(View.GONE);
+        holder.cbFolderSelect.setVisibility(View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -57,14 +60,16 @@ public class CleanUpAdapter extends RecyclerView.Adapter<CleanUpAdapter.ViewHold
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView folderIcon;
-        TextView txtFolderName;
-
+        ImageView folderIcon, cbFolderSelect;
+        TextView txtFolderName, tvPhotoCount;
+        View selectionOverlay;
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-
             folderIcon = itemView.findViewById(R.id.imgPreview);
             txtFolderName = itemView.findViewById(R.id.txtFolderName);
+            tvPhotoCount  = itemView.findViewById(R.id.txtPhotoCount);
+            selectionOverlay = itemView.findViewById(R.id.selectionOverlay);
+            cbFolderSelect = itemView.findViewById(R.id.cbFolderSelect);
         }
     }
 }
